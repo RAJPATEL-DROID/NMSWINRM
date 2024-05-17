@@ -1,0 +1,354 @@
+{
+ "instance.metric": "no",
+ "metric": "Network Queue Length",
+ "metric.name": "system.network.output.queue.length",
+ "metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Uptime Seconds",
+"metric.name": "started.time.seconds",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Network Out Packets Per Sec",
+"metric.name": "system.network.out.packets.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "System Disk IO Write Bytes Per Sec",
+"metric.name": "system.disk.io.write.bytes.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "CPU Idle Percent",
+"metric.name": "system.cpu.idle.percent",
+"metric.type": "Percent"
+},
+{
+"instance.metric": "no",
+"metric": "Disk Used Bytes",
+"metric.name": "system.disk.used.bytes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Memory Free Percent",
+"metric.name": "system.memory.free.percent",
+"metric.type": "Percent"
+},
+{
+"instance.metric": "no",
+"metric": "Serial Number",
+"metric.name": "system.serial.number",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Logical Processors",
+"metric.name": "system.logical.processors",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Virtual",
+"metric.name": "system.virtual",
+"metric.type": "String"
+},
+{
+"instance.metric": "no",
+"metric": "Cache Memory Bytes",
+"metric.name": "system.cache.memory.bytes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "System Disk IO Time Percent",
+"metric.name": "system.disk.io.time.percent",
+"metric.type": "Percent"
+},
+{
+"instance.metric": "no",
+"metric": "OS Name",
+"metric.name": "system.os.name",
+"metric.type": "String"
+},
+{
+"instance.metric": "no",
+"metric": "System Disk IO Write Ops Per Sec",
+"metric.name": "system.disk.io.write.ops.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Network Bytes Per Sec",
+"metric.name": "system.network.bytes.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Memory Used Percent",
+"metric.name": "system.memory.used.percent",
+"metric.type": "Percent"
+},
+{
+"instance.metric": "no",
+"metric": "Model",
+"metric.name": "system.model",
+"metric.type": "String"
+},
+{
+"instance.metric": "no",
+"metric": "System Disk IO Bytes Per Sec",
+"metric.name": "system.disk.io.bytes.per.sec",
+"metric.type": "String"
+},
+{
+"instance.metric": "no",
+"metric": "Memory Available Bytes",
+"metric.name": "system.memory.available.bytes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "CPU Interrupt Percent",
+"metric.name": "system.cpu.interrupt.percent",
+"metric.type": "Percent"
+},
+{
+"instance.metric": "no",
+"metric": "Network Out Bytes Per Sec",
+"metric.name": "system.network.out.bytes.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Memory Used Bytes",
+"metric.name": "system.memory.used.bytes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Network Error Packets",
+"metric.name": "system.network.error.packets",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "CPU Description",
+"metric.name": "system.cpu.description",
+"metric.type": "String"
+},
+{
+"instance.metric": "no",
+"metric": "OS Service Pack",
+"metric.name": "system.os.service.pack",
+"metric.type": "String"
+},
+{
+"instance.metric": "no",
+"metric": "Interrupts Per Sec",
+"metric.name": "system.interrupts.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Memory Committed Bytes",
+"metric.name": "system.memory.committed.bytes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Disk Free Percent",
+"metric.name": "system.disk.free.percent",
+"metric.type": "Percent"
+},
+{
+"instance.metric": "no",
+"metric": "Disk Used Percent",
+"metric.name": "system.disk.used.percent",
+"metric.type": "Percent"
+},
+{
+"instance.metric": "no",
+"metric": "Network TCP Connections",
+"metric.name": "system.network.tcp.connections",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Context Switches Per Sec",
+"metric.name": "system.context.switches.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "System Disk IO Read Ops Per Sec",
+"metric.name": "system.disk.io.read.ops.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Disk Capacity Bytes",
+"metric.name": "system.disk.capacity.bytes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "CPU Type",
+"metric.name": "system.cpu.type",
+"metric.type": "String"
+},
+{
+"instance.metric": "no",
+"metric": "System Vendor",
+"metric.name": "system.vendor",
+"metric.type": "String"
+},
+{
+"instance.metric": "no",
+"metric": "System Name",
+"metric.name": "system.name",
+"metric.type": "String"
+},
+{
+"instance.metric": "no",
+"metric": "Threads",
+"metric.name": "system.threads",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Processor Queue Length",
+"metric.name": "system.processor.queue.length",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Disk Free Bytes",
+"metric.name": "system.disk.free.bytes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Memory Installed Bytes",
+"metric.name": "system.memory.installed.bytes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "System Disk IO Ops Per Sec",
+"metric.name": "system.disk.io.ops.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "System Disk IO Idle Time Percent",
+"metric.name": "system.disk.io.idle.time.percent",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Memory Free Bytes",
+"metric.name": "system.memory.free.bytes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Pages Per Sec",
+"metric.name": "system.pages.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Uptime",
+"metric.name": "started.time",
+"metric.type": "String"
+},
+{
+"instance.metric": "no",
+"metric": "System Disk IO Read Bytes Per Sec",
+"metric.name": "system.disk.io.read.bytes.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "CPU User Percent",
+"metric.name": "system.cpu.user.percent",
+"metric.type": "Percent"
+},
+{
+"instance.metric": "no",
+"metric": "CPU Used Percent",
+"metric.name": "system.cpu.percent",
+"metric.type": "Percent"
+},
+{
+"instance.metric": "no",
+"metric": "Pages Faults Per Sec",
+"metric.name": "system.pages.faults.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Network TCP Retransmissions",
+"metric.name": "system.network.tcp.retransmissions",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "OS Version",
+"metric.name": "system.os.version",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Physical Processors",
+"metric.name": "system.physical.processors",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Running Processes",
+"metric.name": "system.running.processes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "System Disk IO Queue Length",
+"metric.name": "system.disk.io.queue.length",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "CPU Cores",
+"metric.name": "system.cpu.cores",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Non Paged Memory Bytes",
+"metric.name": "system.non.paged.memory.bytes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Paged Memory Bytes",
+"metric.name": "system.paged.memory.bytes",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Network In Packets Per Sec",
+"metric.name": "system.network.in.packets.per.sec",
+"metric.type": "Count"
+},
+{
+"instance.metric": "no",
+"metric": "Network In Bytes Per Sec",
+"metric.name": "system.network.in.bytes.per.sec",
+"metric.type": "Count"
+}]
