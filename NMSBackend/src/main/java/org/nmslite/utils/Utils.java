@@ -1,16 +1,22 @@
 package org.nmslite.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.nmslite.Bootstrap;
 import org.nmslite.db.ConfigDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,30 +43,50 @@ public class Utils {
 
     }
 
-    public static Boolean readConfig()  {
+    public static Future<Void> readConfig()
+    {
+        Promise<Void> promise = Promise.promise();
         try
         {
-            ObjectMapper mapper = new ObjectMapper();
+            Vertx vertx = Bootstrap.getVertx();
 
-            config = mapper.readValue(new File(Constants.CONFIG_PATH), ConcurrentMap.class);
+            vertx.fileSystem().readFile(Constants.CONFIG_PATH, handler ->
+            {
+                if (handler.succeeded())
+                {
+                    var data = handler.result().toJsonObject();
 
-            return true;
+                    for (var key : data.fieldNames())
+                    {
+                        config.put(key, data.getValue(key));
+                    }
+
+                    logger.info("Config File Read Successfully...");
+                    logger.info(config.toString());
+                    promise.complete();
+                }
+                else
+                {
+                    logger.error("Error Occurred reading the config file :  ",handler.cause());
+
+                    promise.fail(handler.cause());
+                }
+            });
         }
         catch (Exception exception)
         {
            logger.error("error reading config file {}", exception.getMessage());
 
-           return false;
+           logger.error(Arrays.toString(exception.getStackTrace()));
+
+           promise.fail("Exception Occurred in Reading Config File");
         }
+        return promise.future();
     }
 
-    public static JsonObject getData(String type) {
+    public static JsonObject getData(RequestType type) {
 
-        var response = new JsonObject();
-
-        var result = new JsonObject(ConfigDB.read(type));
-
-        response.mergeIn(result);
+        var response = ConfigDB.read(type);
 
         response.put(Constants.ERROR_CODE, Constants.SUCCESS_CODE);
 
@@ -69,46 +95,56 @@ public class Utils {
         return response;
     };
 
-    public static JsonArray createContext(JsonArray targets, String requestType, Logger logger)
+    public static JsonObject getData(RequestType type,Long id)
     {
 
-        var contextArray = new JsonArray();
+        var response = ConfigDB.read(type,id);
 
+        response.put(Constants.ERROR_CODE, Constants.SUCCESS_CODE);
+
+        response.put(Constants.STATUS, Constants.SUCCESS);
+
+        return response;
+    };
+
+    public static JsonArray createContext(JsonObject targets, String requestType, Logger logger)
+    {
+
+
+        var contexts = new JsonArray();
         try
         {
-            for(var target: targets)
-            {
-                var targetData = new JsonObject(target.toString());
 
-                var context = new JsonObject();
+            var context = new JsonObject();
 
-                var discoveryInfo = targetData.getJsonObject(Constants.DISCOVERY_DATA);
+            var discoveryInfo = targets.getJsonObject(Constants.DISCOVERY_DATA);
 
-                context.put(Constants.REQUEST_TYPE, requestType);
+            context.put(Constants.REQUEST_TYPE, requestType);
 
-                context.put(Constants.DEVICE_PORT, Integer.parseInt(discoveryInfo.getString(Constants.DEVICE_PORT)));
+            context.put(Constants.DEVICE_PORT, Integer.parseInt(discoveryInfo.getString(Constants.DEVICE_PORT)));
 
-                context.put(Constants.IP, discoveryInfo.getString(Constants.IP));
+            context.put(Constants.IP, discoveryInfo.getString(Constants.IP));
 
-                context.put(Constants.CREDENTIAL_PROFILES, targetData.getJsonArray(Constants.CREDENTIAL_PROFILES));
+            context.put(Constants.CREDENTIAL_PROFILES, targets.getJsonArray(Constants.CREDENTIAL_PROFILES));
 
-                contextArray.add(context);
-            }
+            contexts.add(context);
 
         }
         catch(Exception exception)
         {
-            logger.error(String.format("Exception: %s",exception));
+
+            logger.error("Exception occurred in creating context : ",exception);
 
             logger.error(Arrays.toString(exception.getStackTrace()));
 
+            return contexts;
+
         }
-
-        return contextArray;
-
+        return contexts;
     }
 
-    public static boolean checkAvailability(String ip) {
+    public static boolean checkAvailability(String ip)
+    {
 
         ProcessBuilder processBuilder = new ProcessBuilder("fping", "-c", "3", "-q", ip);
 
@@ -121,7 +157,6 @@ public class Utils {
 
             String line;
 
-            // TODO : Change This Logic
             while ((line = reader.readLine()) != null)
             {
                 if (line.contains("/0%"))
@@ -147,12 +182,11 @@ public class Utils {
 
     }
 
-
     public static JsonArray spawnPluginEngine(String encodedString, Integer size)
     {
         try
         {
-            var currentDir = System.getProperty("user.dir");
+            var currentDir = System.getProperty(Constants.USER_DIRECTORY);
 
             var processBuilder = new java.lang.ProcessBuilder(currentDir + Constants.PLUGIN_APPLICATION_PATH, encodedString);
 
@@ -160,7 +194,7 @@ public class Utils {
 
             var process = processBuilder.start();
 
-            var exitStatus = process.waitFor((Integer) Utils.config.get(Constants.PLUGIN_PROCESS_TIMEOUT), TimeUnit.SECONDS);
+            var exitStatus = process.waitFor(Long.parseLong(Utils.config.get(Constants.PLUGIN_PROCESS_TIMEOUT).toString()), TimeUnit.SECONDS);
 
             if(!exitStatus)
             {
@@ -176,7 +210,6 @@ public class Utils {
             // Read the output of the command
             var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-
             var buffer = Buffer.buffer();
 
             String line;
@@ -185,7 +218,7 @@ public class Utils {
 
             while ((line = reader.readLine()) != null && count <= size) {
                 buffer.appendString(line);
-                if (line.contains(Constants.UNIQUE_SEPARATOR   )) {
+                if (line.contains(Constants.UNIQUE_SEPARATOR)) {
                     count++;
                 }
             }
@@ -203,11 +236,13 @@ public class Utils {
 
                 var decodedString = new String(decodedBytes);
 
-                logger.info(decodedString);
+                logger.info("Received Data from Device : {}" ,decodedString);
 
-                replyJson.add(decodedString);
+                replyJson.add(new JsonObject(decodedString));
 
             }
+
+
 
             return replyJson;
 
@@ -218,9 +253,42 @@ public class Utils {
 
             logger.error(Arrays.toString(exception.getStackTrace()));
 
-            // TODO : IN EXCEPTION CASE-> Create New OBJECT,INSERT ERRORS AND SEND IT
-            return null;
+            var error = new JsonArray();
 
+            var response = new JsonObject();
+
+            response.put(Constants.ERROR, "Discovery Run Request failed")
+
+                    .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
+
+                    .put(Constants.ERROR_MESSAGE,"Exception Occurred during Spawning Process Builder" )
+
+                    .put(Constants.STATUS, Constants.FAILED);
+
+            error.add(response);
+
+            return error;
+
+        }
+    }
+
+    public static void writeToFile(String ip, JsonObject result)
+    {
+        String fileName = Constants.FILE_PATH +  ip + ".text";
+
+        LocalDateTime now = LocalDateTime.now();
+
+        String formattedDateTime = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        try (FileWriter fileWriter = new FileWriter(fileName,true))
+        {
+            fileWriter.write("{ \"" + formattedDateTime + "\" : " + result.toString() + "}\n");
+
+            logger.info("Result successfully written to file: {} " , fileName);
+        }
+        catch (IOException exception)
+        {
+            logger.error("Error writing result to file: {}" , exception.getMessage());
         }
     }
 

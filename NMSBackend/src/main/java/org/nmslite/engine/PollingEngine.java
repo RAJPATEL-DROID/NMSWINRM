@@ -4,18 +4,17 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.nmslite.Bootstrap;
 import org.nmslite.db.ConfigDB;
 import org.nmslite.utils.Constants;
 import org.nmslite.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Base64;
+
+import static org.nmslite.utils.RequestType.POLLING;
+import static org.nmslite.utils.RequestType.PROVISION;
 
 public class PollingEngine extends AbstractVerticle
 {
@@ -24,21 +23,14 @@ public class PollingEngine extends AbstractVerticle
     @Override
     public void start(Promise<Void> startPromise)
     {
-        int pollTime  = (Integer) Utils.config.get(Constants.DEFAULT_POLL_TIME) * 1000;
+        long pollTime  =  Long.parseLong(Utils.config.get(Constants.DEFAULT_POLL_TIME).toString()) * 1000;
 
         logger.trace("Default Poll time set to {} ", pollTime);
 
-        //  TODO : Remove HardCoded Conversion,use parseXXX Methods
-
-        Integer maxBatchSize = Integer.parseInt(Utils.config.get(Constants.MAX_BATCH_SIZE).toString());
-
-
-        logger.trace("Default Max batch size set to {}", maxBatchSize);
-
-        Bootstrap.vertx.setPeriodic(pollTime, tid ->
+        vertx.setPeriodic(pollTime, tid ->
         {
 
-            var result =new JsonObject(ConfigDB.read(Constants.PROVISION));
+            var result = ConfigDB.read(PROVISION);
 
             // We Get Array of Discovery Id of Provisioned Device
             if(result.getJsonArray(Constants.PROVISION_DEVICES).isEmpty())
@@ -50,76 +42,81 @@ public class PollingEngine extends AbstractVerticle
                 var pollingArray = new JsonArray();
 
                 //  Get Discovery and Credential Details of Each Device ( Create Context ) :
-                if(result.size() <= maxBatchSize){
-
-                    for(var ele : result.getJsonArray(Constants.PROVISION_DEVICES))
-                    {
-                        var res = new JsonObject(ConfigDB.read(Long.parseLong(ele.toString()),Constants.POLLING));
-
-                        pollingArray.add(res.getJsonObject(Constants.Context));
-                    }
-                }
-                else
+                for(var id : result.getJsonArray(Constants.PROVISION_DEVICES))
                 {
-                    var cnt =0;
-                    while(cnt < maxBatchSize)
-                    {
-                        var res =  new JsonObject(ConfigDB.read(Long.parseLong(result.getJsonArray(Constants.PROVISION_DEVICES).getString(cnt)),Constants.POLLING));
 
-                        pollingArray.add(res.getJsonObject(Constants.Context));
+                    var res = ConfigDB.read(POLLING,Long.parseLong(id.toString()));
 
-                        cnt++;
-                    }
+                    pollingArray.add(res.getJsonObject(Constants.CONTEXT));
 
                 }
 
-
-//                 Check Availability
-                 checkAvailability(pollingArray);
+              // Check Availability
+                checkAvailability(pollingArray);
 
                 logger.trace("Polling array : {}",pollingArray);
 
-                ///  tAKE OUT THE WHOLE CONTEXT FROM THE REQUEST;
+                //  tAKE OUT THE WHOLE CONTEXT FROM THE REQUEST;
                 String encodedContext = Base64.getEncoder().encodeToString(pollingArray.toString().getBytes());
 
                 try
                 {
+                    vertx.executeBlocking(future ->
+                    {
+                        var replyJson = Utils.spawnPluginEngine(encodedContext, pollingArray.size());
 
-                    var replyJson = Utils.spawnPluginEngine(encodedContext, pollingArray.size());
+                        if(replyJson == null)
+                        {
+                            future.fail("Process Timeout");
+                        }
 
-                    logger.trace("Polled Result : {}", replyJson);
+                        future.complete(replyJson);
 
-                    if(replyJson != null){
-                        for (int i = 0; i < replyJson.size(); i++) {
+                    }).onComplete(handler ->
+                    {
+                        if(handler.succeeded())
+                        {
+                            var replyJson = new JsonArray(String.valueOf(handler.result()));
 
-                            JsonObject jsonObject = new JsonObject(replyJson.getString(i));
+                            logger.trace("Polled Result : {}", replyJson);
 
-                            logger.info("Result of device {} is {} ", i, jsonObject);
+                            for (int i = 0; i < replyJson.size(); i++) {
 
-                            String status = jsonObject.getString(Constants.STATUS);
+                                JsonObject response = replyJson.getJsonObject(i);
 
-                            logger.info("Status of device {} is {} ", i, status);
+                                logger.info("Result of device {} is {} ", i, response);
 
-                            if (status.equals(Constants.SUCCESS)) {
+                                String ip = response.getString(Constants.IP);
+                                String status = response.getString(Constants.STATUS);
 
-                                JsonObject res1 = jsonObject.getJsonObject(Constants.RESULT);
+                                logger.info("Status of device {} is {} ", i, status);
 
-                                String ip = jsonObject.getString(Constants.IP);
+                                if (status.equals(Constants.SUCCESS)) {
 
-                                // Write result to a file
+                                    JsonObject pollResult = response.getJsonObject(Constants.RESULT);
 
-                                writeResultToFile(ip, res1);
+                                    // Write result to a file
+                                    Utils.writeToFile(ip, pollResult);
 
-                            } else if (status.equals(Constants.FAILED)) {
+                                } else if (status.equals(Constants.FAILED)) {
 
-                                JsonArray errors = jsonObject.getJsonArray(Constants.ERRORS);
+                                    JsonArray errors = response.getJsonArray(Constants.ERRORS);
+                                    for (int j = 0; j < errors.size(); j++)
+                                    {
 
-                                // Log errors
+                                        JsonObject error = errors.getJsonObject(j);
 
-                                logErrors(errors);
+                                        Utils.writeToFile(ip,error);
+
+                                    }
+                                }
                             }
                         }
-                    }
+                        else
+                        {
+                            logger.info(handler.cause().getMessage());
+                        }
+                    });
                 }
                 catch (Exception exception)
                 {
@@ -128,50 +125,17 @@ public class PollingEngine extends AbstractVerticle
 
                     logger.error(exception.toString());
 
-                    logger.error(exception.getStackTrace().toString());
+                    logger.error(Arrays.toString(exception.getStackTrace()));
 
                     logger.error(exception.getMessage());
                 }
             }
         });
 
+        logger.info("Polling Engine Started");
         startPromise.complete();
     }
 
-    private static void writeResultToFile(String ip, JsonObject result)
-    {
-        String fileName = ip + ".json";
-
-        LocalDateTime now = LocalDateTime.now();
-
-        String formattedDateTime = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
-        try (FileWriter fileWriter = new FileWriter(fileName,true))
-        {
-            fileWriter.write("{ \"" + formattedDateTime + "\" : " + result.toString() + "}\n");
-
-            logger.info("Result successfully written to file: {} " , fileName);
-        }
-        catch (IOException exception)
-        {
-            logger.error("Error writing result to file: {}" , exception.getMessage());
-        }
-    }
-
-    private static void logErrors(JsonArray errors)
-    {
-        for (int i = 0; i < errors.size(); i++)
-        {
-
-            JsonObject error = errors.getJsonObject(i);
-
-            String errorMessage = error.getString("Error.Message");
-
-            String errorCode = error.getString("Error.code");
-
-            logger.error("Error code: {} , Message : {} ", errorCode, errorMessage);
-        }
-    }
 
     private void checkAvailability(JsonArray pollingArray)
     {

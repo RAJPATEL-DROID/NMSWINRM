@@ -43,8 +43,8 @@
         </encoder>
     </appender>
 
-    <appender name="processbuilder" class="ch.qos.logback.core.FileAppender">
-        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/ProcessBuilder.log</file>
+    <appender name="utils" class="ch.qos.logback.core.FileAppender">
+        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/Utils.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
         </encoder>
@@ -71,12 +71,6 @@
         </encoder>
     </appender>
 
-    <appender name="discoveryRun" class="ch.qos.logback.core.FileAppender">
-        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/DiscoveryRun.log</file>
-        <encoder>
-            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
-        </encoder>
-    </appender>
 
     <!-- Root Logger -->
     <root level="info">
@@ -84,39 +78,35 @@
     </root>
 
     <!-- Logger for Server -->
-    <logger name="org.nmslite.engine.APIEngine" level="trace" additivity="false">
+    <logger name="org.nmslite.apiserver.APIServer" level="trace" additivity="false">
         <appender-ref ref="server"/>
     </logger>
 
     <!-- Logger for Credential  -->
-    <logger name="org.nmslite.profile.Credential" level="trace" additivity="false">
+    <logger name="org.nmslite.apiserver.Credential" level="trace" additivity="false">
         <appender-ref ref="credential"/>
     </logger>
 
     <!-- Logger for Provision  -->
-    <logger name="org.nmslite.profile.Provision" level="trace" additivity="false">
+    <logger name="org.nmslite.apiserver.Provision" level="trace" additivity="false">
         <appender-ref ref="provision"/>
     </logger>
 
     <!-- Logger for Discovery  -->
-    <logger name="org.nmslite.profile.Discovery" level="trace" additivity="false">
+    <logger name="org.nmslite.apiserver.Discovery" level="trace" additivity="false">
         <appender-ref ref="discovery"/>
     </logger>
 
-    <logger name="org.nmslite.engine.Discoveryengine" level="trace" additivity="false">
+    <logger name="org.nmslite.engine.DiscoveryEngine" level="trace" additivity="false">
         <appender-ref ref="discoveryengine"/>
-    </logger>
-
-    <logger name="org.nmslite.profile.DiscoveryRun" level="trace" additivity="false">
-        <appender-ref ref="discoveryRun"/>
     </logger>
 
     <logger name="org.nmslite.engine.PollingEngine" level="trace" additivity="false">
         <appender-ref ref="pollingengine"/>
     </logger>
 
-    <logger name="org.nmslite.utils.Helper" level="trace" additivity="false">
-        <appender-ref ref="processbuilder"/>
+    <logger name="org.nmslite.utils.Utils" level="trace" additivity="false">
+        <appender-ref ref="utils"/>
     </logger>
 
     <logger name = "org.nmslite.db.ConfigDB" level="trace" additivity="false">
