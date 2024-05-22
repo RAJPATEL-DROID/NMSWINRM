@@ -14,6 +14,7 @@ target/
 *.ipr
 /Logs/
 *.json
+/PluginEngine/
 
 ### Eclipse ###
 .apt_generated
@@ -39,4 +40,4 @@ build/
 
 ### Mac OS ###
 .DS_Store
-/PluginEngine/
+
