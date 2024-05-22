@@ -50,15 +50,7 @@ public class Provision extends AbstractVerticle {
         {
             logger.error("Exception occurred while retrieving Provisioned Devices", exception);
 
-            var response = new JsonObject();
-
-            response.put(Constants.ERROR, exception)
-
-                    .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                    .put(Constants.ERROR_MESSAGE, exception.getMessage())
-
-                    .put(Constants.STATUS, Constants.FAILED);
+            var response = Utils.errorHandler(exception.toString(),Constants.BAD_REQUEST,exception.getMessage());
 
             context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -79,9 +71,27 @@ public class Provision extends AbstractVerticle {
 
                     var response = ConfigDB.create(PROVISION ,request);
 
-                    if (response.getString(Constants.STATUS).equals(Constants.SUCCESS)) {
+                    if (response.containsKey(Constants.STATUS))
+                    {
 
-                       logger.info("Device Provisioned Successfully");
+                        if(response.containsKey(Constants.ERROR))
+                        {
+                            response = Utils.errorHandler("Provision Unsuccessful",Constants.BAD_REQUEST,response.getString(Constants.ERROR));
+
+                            context.response().setStatusCode(Constants.BAD_REQUEST);
+
+                        }
+                        else
+                        {
+                            response = Utils.errorHandler("Provision Unsuccessful",Constants.BAD_REQUEST,"Device is not discovered yet!!");
+
+                            context.response().setStatusCode(Constants.OK);
+                        }
+                    }
+                    else
+                    {
+
+                        logger.info("Device Provisioned Successfully");
 
                         response.put(Constants.MESSAGE,"Device Provisioned Successfully");
 
@@ -89,36 +99,15 @@ public class Provision extends AbstractVerticle {
 
                         context.response().setStatusCode(Constants.OK);
 
-                    } else {
 
-                        if(response.containsKey(Constants.ERROR))
-                        {
-                            response.put(Constants.ERROR, "Provide Valid Discovery Id");
-
-                            context.response().setStatusCode(Constants.BAD_REQUEST);
-
-                        }
-                        else
-                        {
-                            response.put(Constants.MESSAGE, "Device is not discovered yet!!");
-
-                            context.response().setStatusCode(Constants.OK);
-                        }
                     }
                     context.json(response);
             }
             else
             {
                 logger.error(Constants.MISSING_FIELD);
-                var response = new JsonObject();
 
-                response.put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                        .put(Constants.ERROR, Constants.MISSING_FIELD)
-
-                        .put(Constants.ERROR_MESSAGE, "Enter Valid Discovery Id as Parameter")
-
-                        .put(Constants.STATUS, Constants.FAILED);
+                var response = Utils.errorHandler(Constants.MISSING_FIELD,Constants.BAD_REQUEST,"Enter Valid Discovery Id");
 
                 context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -130,15 +119,7 @@ public class Provision extends AbstractVerticle {
         {
             logger.error("Error Provisioning Device :", exception);
 
-            var response = new JsonObject();
-
-            response.put(Constants.ERROR, "Exception in provisioning device")
-
-                    .put(Constants.ERROR_CODE, 400)
-
-                    .put(Constants.ERROR_MESSAGE, exception.getMessage())
-
-                    .put(Constants.STATUS, Constants.FAILED);
+            var response = Utils.errorHandler(exception.toString(),Constants.BAD_REQUEST,exception.getMessage());
 
             context.response().setStatusCode(Constants.BAD_REQUEST);
 

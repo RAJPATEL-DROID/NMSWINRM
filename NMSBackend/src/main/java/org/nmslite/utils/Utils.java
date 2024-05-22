@@ -143,6 +143,15 @@ public class Utils {
         return contexts;
     }
 
+    public static JsonObject errorHandler(String error,Integer errorCode,String errorMessage)
+    {
+        return new JsonObject()
+                        .put(Constants.ERROR,error)
+                        .put(Constants.ERROR_CODE, errorCode)
+                        .put(Constants.ERROR_MESSAGE, errorMessage)
+                        .put(Constants.STATUS,Constants.FAILED);
+    }
+
     public static boolean checkAvailability(String ip)
     {
 

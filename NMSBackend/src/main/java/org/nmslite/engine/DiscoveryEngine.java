@@ -145,12 +145,7 @@ public class DiscoveryEngine extends AbstractVerticle
                             }
                             else
                             {
-                                var response = new JsonObject();
-
-                                response.put(Constants.ERROR, "Device Discovery Failed");
-
-                                response.put(Constants.ERROR_MESSAGE, handler.cause());
-
+                                logger.info("Device Discovery Failed");
                             }
                         }
                 );

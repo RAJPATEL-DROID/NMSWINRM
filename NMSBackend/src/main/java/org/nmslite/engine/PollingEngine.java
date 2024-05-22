@@ -35,7 +35,7 @@ public class PollingEngine extends AbstractVerticle
             // We Get Array of Discovery Id of Provisioned Device
             if(result.getJsonArray(Constants.PROVISION_DEVICES).isEmpty())
             {
-                logger.trace("No Provisioned Device Found : {}", result.getJsonArray(Constants.PROVISION_DEVICES));
+                logger.info("No Provisioned Device Found.");
             }
             else
             {
@@ -52,6 +52,7 @@ public class PollingEngine extends AbstractVerticle
                 }
 
               // Check Availability
+
                 checkAvailability(pollingArray);
 
                 logger.trace("Polling array : {}",pollingArray);
@@ -78,7 +79,7 @@ public class PollingEngine extends AbstractVerticle
                         {
                             var replyJson = new JsonArray(String.valueOf(handler.result()));
 
-                            logger.trace("Polled Result : {}", replyJson);
+                            logger.info("Polled Result : {}", replyJson);
 
                             for (int i = 0; i < replyJson.size(); i++) {
 
@@ -89,7 +90,7 @@ public class PollingEngine extends AbstractVerticle
                                 String ip = response.getString(Constants.IP);
                                 String status = response.getString(Constants.STATUS);
 
-                                logger.info("Status of device {} is {} ", i, status);
+                                logger.trace("Status of device {} is {} ", i, status);
 
                                 if (status.equals(Constants.SUCCESS)) {
 

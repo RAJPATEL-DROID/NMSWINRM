@@ -55,15 +55,7 @@ public class Discovery {
         {
             logger.error("Exception occurred while retrieving discovery profiles", exception);
 
-            var response = new JsonObject();
-
-            response.put(Constants.ERROR, exception)
-
-                    .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                    .put(Constants.ERROR_MESSAGE, exception.getMessage())
-
-                    .put(Constants.STATUS, Constants.FAILED);
+            var response = Utils.errorHandler(exception.toString(),Constants.BAD_REQUEST,exception.getMessage());
 
             context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -98,13 +90,16 @@ public class Discovery {
 
                         logger.info("Discovery response: {}", response);
 
-                        if (response.containsKey(Constants.ERROR)) {
+                        if (response.containsKey(Constants.STATUS))
+                        {
 
-                            response.put(Constants.STATUS, Constants.FAILED);
+                            response = Utils.errorHandler("Discovery Profile Not Created",Constants.BAD_REQUEST,"Provide Correct Discovery Name and Credential Ids");
 
                             context.response().setStatusCode(Constants.BAD_REQUEST);
 
-                        } else {
+                        }
+                        else
+                        {
 
                             response.put(Constants.ERROR_CODE, Constants.SUCCESS_CODE);
 
@@ -115,53 +110,35 @@ public class Discovery {
                         }
                         context.json(response);
 
-                    } else {
+                    }
+                    else
+                    {
                         logger.error("Invalid Fields in Request !! {}", request);
 
-                        var response = new JsonObject();
-
-                        response.put(Constants.ERROR, "Empty Fields")
-
-                                .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                                .put(Constants.ERROR_MESSAGE, "Fields Can't Be Empty")
-
-                                .put(Constants.STATUS, Constants.FAILED);
+                        var response = Utils.errorHandler( "Empty Fields",Constants.BAD_REQUEST,"Fields Can't Be Empty");
 
                         context.response().setStatusCode(Constants.BAD_REQUEST);
 
                         context.json(response);
                     }
-                } else {
+                }
+                else
+                {
 
                     logger.error(Constants.MISSING_FIELD);
 
                     logger.error("Received Request : {}", request);
 
-                    var response = new JsonObject();
-
-                    response.put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                            .put(Constants.ERROR, "Necessary Fields Are Not Provided")
-
-                            .put(Constants.ERROR_MESSAGE, "Enter IP,Device Port and Credential Ids in Proper Format")
-
-                            .put(Constants.STATUS, Constants.FAILED);
+                    var response = Utils.errorHandler("Necessary Fields Are Not Provided",Constants.BAD_REQUEST,"Enter IP,Device Port and Credential Ids in Proper Format");
 
                     context.response().setStatusCode(Constants.BAD_REQUEST);
 
                     context.json(response);
                 }
-            } else {
-                var response = new JsonObject();
-
-                response.put(Constants.ERROR, "Invalid JSON Format")
-
-                        .put(Constants.ERROR_CODE, 400)
-
-                        .put(Constants.ERROR_MESSAGE, "Provide Valid JSON Format ")
-
-                        .put(Constants.STATUS, Constants.FAILED);
+            }
+            else
+            {
+                var response = Utils.errorHandler("Invalid JSON Format",Constants.BAD_REQUEST,"Provide Valid JSON Format");
 
                 context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -171,15 +148,7 @@ public class Discovery {
         } catch (Exception exception) {
             logger.error("Error creating discovery profile :", exception);
 
-            var response = new JsonObject();
-
-            response.put(Constants.ERROR, "Exception creating credential profile")
-
-                    .put(Constants.ERROR_CODE, 400)
-
-                    .put(Constants.ERROR_MESSAGE, exception.getMessage())
-
-                    .put(Constants.STATUS, Constants.FAILED);
+            var response = Utils.errorHandler(exception.toString(),Constants.BAD_REQUEST,exception.getMessage());
 
             context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -198,9 +167,11 @@ public class Discovery {
 
                 if (entries.containsKey(Constants.ERROR))
                 {
+                    var response = Utils.errorHandler("Invalid Discovery id",Constants.BAD_REQUEST,"Provide valid discovery id");
+
                     context.response().setStatusCode(Constants.BAD_REQUEST);
 
-                    context.json(entries);
+                    context.json(response);
 
                 }
                 else
@@ -211,11 +182,11 @@ public class Discovery {
 
                     var response = new JsonObject();
 
-                    response.put(Constants.STATUS, Constants.SUCCESS)
+                    response.put(Constants.MESSAGE, "Request of Discovery Run has been received")
 
-                            .put(Constants.ERROR_CODE, Constants.SUCCESS_CODE)
+                            .put(Constants.STATUS, Constants.SUCCESS)
 
-                            .put(Constants.MESSAGE, "Request of Discovery Run has been received");
+                            .put(Constants.ERROR_CODE, Constants.SUCCESS_CODE);
 
                     context.response().setStatusCode(Constants.OK);
 
@@ -226,15 +197,7 @@ public class Discovery {
             else
             {
 
-                var response = new JsonObject();
-
-                response.put(Constants.ERROR, "Valid Id Not Provided")
-
-                        .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                        .put(Constants.ERROR_MESSAGE, "Provide Valid Numerical Id")
-
-                        .put(Constants.STATUS, Constants.FAILED);
+                var response = Utils.errorHandler("Valid Id Not Provided",Constants.BAD_REQUEST,"Provide Valid Numerical Id");
 
                 context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -248,15 +211,7 @@ public class Discovery {
 
             context.response().setStatusCode(500);
 
-            var response = new JsonObject();
-
-            response.put(Constants.ERROR, "Device Discovery Failed")
-
-                    .put(Constants.ERROR_CODE, 500)
-
-                    .put(Constants.ERROR_MESSAGE, "Internal Server Error")
-
-                    .put(Constants.STATUS, Constants.FAILED);
+            var response = Utils.errorHandler(exception.toString(),Constants.BAD_REQUEST,exception.getMessage());
 
             context.json(response);
         }
@@ -277,7 +232,7 @@ public class Discovery {
 
                     if(response.containsKey(Constants.ERROR))
                     {
-                        response.put(Constants.ERROR_CODE, Constants.BAD_REQUEST);
+                        response = Utils.errorHandler("Invalid Discovery Id", Constants.BAD_REQUEST,"Provide Valid Discovery Id");
 
                         context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -285,9 +240,7 @@ public class Discovery {
                     }
                     else
                     {
-                        response.put(Constants.MESSAGE, "Device Discovery Failed!!");
-
-                        response.put(Constants.ERROR_CODE, Constants.BAD_REQUEST);
+                        response = Utils.errorHandler("Device Discovery Failed",Constants.BAD_REQUEST,"Device Not Discovered");
 
                         context.response().setStatusCode(Constants.OK);
 
@@ -310,15 +263,7 @@ public class Discovery {
             else
             {
 
-                var response = new JsonObject();
-
-                response.put(Constants.ERROR, "Valid Id Not Provided")
-
-                        .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                        .put(Constants.ERROR_MESSAGE, "Provide Valid Numerical Id")
-
-                        .put(Constants.STATUS, Constants.FAILED);
+                var response = Utils.errorHandler("Valid Id Not Provided",Constants.BAD_REQUEST,"Provide Valid Numerical Id");
 
                 context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -334,15 +279,7 @@ public class Discovery {
 
             context.response().setStatusCode(500);
 
-            var response = new JsonObject();
-
-            response.put(Constants.ERROR, "Exception Occurred")
-
-                    .put(Constants.ERROR_CODE, 500)
-
-                    .put(Constants.ERROR_MESSAGE, "Internal Server Error")
-
-                    .put(Constants.STATUS, Constants.FAILED);
+            var response = Utils.errorHandler(exception.toString(),Constants.BAD_REQUEST,exception.getMessage());
 
             context.json(response);
         }

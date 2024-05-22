@@ -45,11 +45,7 @@ public class ConfigDB {
                     {
                         if (credential.getString(Constants.NAME).equals(request.getString(Constants.NAME)))
                         {
-                            reply.put(Constants.ERROR, "Credential Profile Not Created");
-
-                            reply.put(Constants.ERROR_CODE, Constants.BAD_REQUEST);
-
-                            reply.put(Constants.ERROR_MESSAGE, "Credential with Name " + request.getString(Constants.NAME) + " already exists");
+                            reply.put(Constants.STATUS, Constants.FAILED);
 
                             return reply;
                         }
@@ -72,9 +68,7 @@ public class ConfigDB {
                     {
                         if (!credentialsProfiles.containsKey(Long.parseLong(credentialId.toString())))
                         {
-                            reply.put(Constants.ERROR, "Credential Profiles Are Not Valid")
-
-                                    .put(Constants.ERROR_CODE, Constants.BAD_REQUEST);
+                            reply.put(Constants.STATUS, Constants.FAILED);
 
                             return reply;
                         }
@@ -85,11 +79,7 @@ public class ConfigDB {
                         if (discovery.getString(Constants.NAME).equals(request.getString(Constants.NAME)))
                         {
 
-                            reply.put(Constants.ERROR, "Discovery Profiles Not Created")
-
-                                    .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                                    .put(Constants.ERROR_MESSAGE, "Discovery Profile with Name " + request.getString(Constants.NAME) + " already exists");
+                            reply.put(Constants.STATUS,Constants.FAILED);
 
                             return reply;
                         }
@@ -156,8 +146,6 @@ public class ConfigDB {
 
                                 logger.trace("Device provisioned successfully for {}", id);
 
-                                reply.put(Constants.STATUS, Constants.SUCCESS);
-
                                 return reply;
                             }
                         }
@@ -166,6 +154,8 @@ public class ConfigDB {
                     else
                     {
                         reply.put(Constants.ERROR, "Invalid Discovery Id");
+
+                        reply.put(Constants.STATUS, Constants.FAILED);
                     }
                 }
                 default ->
@@ -293,13 +283,7 @@ public class ConfigDB {
                 }
                 else
                 {
-                    reply.put(Constants.STATUS, Constants.FAILED)
-
-                            .put(Constants.ERROR, "Invalid Discovery id")
-
-                            .put(Constants.ERROR_CODE, 400)
-
-                            .put(Constants.ERROR_MESSAGE, "Provide valid discovery id");
+                    reply.put(Constants.STATUS, Constants.FAILED);
 
                     logger.error("Invalid Discovery Id {}", reply);
                 }

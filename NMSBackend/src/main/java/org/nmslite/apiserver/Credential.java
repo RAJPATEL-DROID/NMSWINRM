@@ -50,15 +50,7 @@ public class Credential {
         {
             logger.error("Exception occurred while retrieving credentials", exception);
 
-            var response = new JsonObject();
-
-            response.put(Constants.ERROR, exception)
-
-                    .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                    .put(Constants.ERROR_MESSAGE, exception.getMessage())
-
-                    .put(Constants.STATUS, Constants.FAILED);
+            var response = Utils.errorHandler(exception.toString(),Constants.BAD_REQUEST,exception.getMessage());
 
             context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -83,9 +75,9 @@ public class Credential {
 
                         var response = ConfigDB.create(CREDENTIAL,request);
 
-                        if (response.containsKey(Constants.ERROR))
+                        if (response.containsKey(Constants.STATUS))
                         {
-                            response.put(Constants.STATUS, Constants.FAILED);
+                            response = Utils.errorHandler("Credential Profile Not Created",Constants.BAD_REQUEST,"Credential with Name " + request.getString(Constants.NAME) + " already exists");
 
                             context.response().setStatusCode(Constants.BAD_REQUEST);
                         }
@@ -105,15 +97,10 @@ public class Credential {
                     {
 
                         logger.error("Credentials are Invalid !!");
+
                         var response = new JsonObject();
 
-                        response.put(Constants.ERROR, "Empty Fields")
-
-                                .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                                .put(Constants.ERROR_MESSAGE, "Fields Can't Be Empty")
-
-                                .put(Constants.STATUS, Constants.FAILED);
+                        response = Utils.errorHandler("Empty Fields",Constants.BAD_REQUEST,"Fields Can't Be Empty");
 
                         context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -125,17 +112,7 @@ public class Credential {
                 {
                     logger.error("Credentials are Missing in the Request !!");
 
-                    var error = new JsonObject();
-
-                    var response = new JsonObject();
-
-                    response.put(Constants.ERROR, "No Credentials Provided")
-
-                            .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                            .put(Constants.ERROR_MESSAGE, "Provide Username and Password")
-
-                            .put(Constants.STATUS, Constants.FAILED);
+                    var response = Utils.errorHandler("No Credentials Provided",Constants.BAD_REQUEST, "Provide Username and Password");
 
                     context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -144,15 +121,7 @@ public class Credential {
             }
             else
             {
-                var response = new JsonObject();
-
-                response.put(Constants.ERROR, "Invalid JSON Format")
-
-                        .put(Constants.ERROR_CODE, 400)
-
-                        .put(Constants.ERROR_MESSAGE, "Provide Valid JSON Format ")
-
-                        .put(Constants.STATUS, Constants.FAILED);
+                var response = Utils.errorHandler("Invalid JSON Format",Constants.BAD_REQUEST, "Provide Valid JSON Format");
 
                 context.response().setStatusCode(Constants.BAD_REQUEST);
 
@@ -164,15 +133,7 @@ public class Credential {
         {
             logger.error("Error creating credential profile :", exception);
 
-            var response = new JsonObject();
-
-            response.put(Constants.ERROR, "Exception creating credential profile")
-
-                    .put(Constants.ERROR_CODE, 400)
-
-                    .put(Constants.ERROR_MESSAGE, exception.getMessage())
-
-                    .put(Constants.STATUS, Constants.FAILED);
+            var response = Utils.errorHandler(exception.toString(),Constants.BAD_REQUEST,exception.getMessage());
 
             context.response().setStatusCode(Constants.BAD_REQUEST);
 
