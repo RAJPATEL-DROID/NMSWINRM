@@ -1,4 +1,0 @@
-2024-05-16 23:49:39.080373253 Fatal Error unmarshal string to json : json: cannot unmarshal object into Go value of type []map[string]interface {}
-2024-05-16 23:51:39.076705892 Fatal Error unmarshal string to json : json: cannot unmarshal object into Go value of type []map[string]interface {}
-2024-05-16 23:55:46.7177048 Fatal Error unmarshal string to json : invalid character 'i' looking for beginning of object key string
-2024-05-16 23:57:46.726002153 Fatal Error unmarshal string to json : invalid character 'i' looking for beginning of object key string
