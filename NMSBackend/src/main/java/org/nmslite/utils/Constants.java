@@ -119,5 +119,11 @@ public class Constants
     public static final String INVALID_REQUEST_TYPE = "Invalid Request Type";
 
     public static final String UNIQUE_SEPARATOR  = "~@@~";
-    
+
+    public static final String DEPLOYMENT_TYPE= "deployment.type";
+
+    public static final String MASTER = "master";
+
+    public static final String POLLER = "poller";
+
 }
