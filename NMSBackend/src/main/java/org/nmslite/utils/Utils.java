@@ -191,6 +191,20 @@ public class Utils {
 
     }
 
+    public static void checkAvailability(JsonArray pollingArray)
+    {
+        for(var element : pollingArray)
+        {
+            var discoveryInfo = new JsonObject(element.toString());
+
+            if (!Utils.checkAvailability(discoveryInfo.getString(Constants.IP) ) )
+            {
+                pollingArray.remove(element);
+            }
+
+        }
+    }
+
     public static JsonArray spawnPluginEngine(String encodedString, Integer size)
     {
         try
@@ -202,6 +216,8 @@ public class Utils {
             processBuilder.redirectErrorStream(true);
 
             var process = processBuilder.start();
+
+            logger.info(String.valueOf(TimeUnit.SECONDS.toNanos(Long.parseLong(Utils.config.get(Constants.PLUGIN_PROCESS_TIMEOUT).toString()))));
 
             var exitStatus = process.waitFor(Long.parseLong(Utils.config.get(Constants.PLUGIN_PROCESS_TIMEOUT).toString()), TimeUnit.SECONDS);
 

@@ -156,6 +156,8 @@ public class DiscoveryEngine extends AbstractVerticle
             }
         });
 
+
+
         logger.info("Discovery Engine Started...");
 
         startPromise.complete();

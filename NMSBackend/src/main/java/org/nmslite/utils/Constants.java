@@ -114,9 +114,10 @@ public class Constants
 
     public static final String PLUGIN_APPLICATION_PATH = "/PluginEngine/bootstrap";
 
-    public static final String FILE_PATH = "/Result/";
+    public static final String FILE_PATH = "/home/raj/Work/NMSWINRMLITE/NMSBackend/Result/";
 
     public static final String INVALID_REQUEST_TYPE = "Invalid Request Type";
 
     public static final String UNIQUE_SEPARATOR  = "~@@~";
+    
 }

@@ -32,7 +32,7 @@ public class PollingEngine extends AbstractVerticle
 
             var result = ConfigDB.read(PROVISION);
 
-            // We Get Array of Discovery Id of Provisioned Device
+            // We Get Array of Discovery ID of Provisioned Device
             if(result.getJsonArray(Constants.PROVISION_DEVICES).isEmpty())
             {
                 logger.info("No Provisioned Device Found.");
@@ -51,19 +51,19 @@ public class PollingEngine extends AbstractVerticle
 
                 }
 
-              // Check Availability
-
-                checkAvailability(pollingArray);
-
-                logger.trace("Polling array : {}",pollingArray);
-
-                //  tAKE OUT THE WHOLE CONTEXT FROM THE REQUEST;
-                String encodedContext = Base64.getEncoder().encodeToString(pollingArray.toString().getBytes());
-
+                // TODO : BREAK BELOW LOGIC INTO VARIOUS METHODS
                 try
                 {
                     vertx.executeBlocking(future ->
                     {
+                        // Check Availability
+                        Utils.checkAvailability(pollingArray);
+
+                        logger.trace("Polling array : {}",pollingArray);
+
+                        //  tAKE OUT THE WHOLE CONTEXT FROM THE REQUEST;
+                        String encodedContext = Base64.getEncoder().encodeToString(pollingArray.toString().getBytes());
+
                         var replyJson = Utils.spawnPluginEngine(encodedContext, pollingArray.size());
 
                         if(replyJson == null)
@@ -138,17 +138,5 @@ public class PollingEngine extends AbstractVerticle
     }
 
 
-    private void checkAvailability(JsonArray pollingArray)
-    {
-        for(var element : pollingArray)
-        {
-            var discoveryInfo = new JsonObject(element.toString());
 
-            if (!Utils.checkAvailability(discoveryInfo.getString(Constants.IP) ) )
-            {
-                pollingArray.remove(element);
-            }
-
-        }
-    }
 }

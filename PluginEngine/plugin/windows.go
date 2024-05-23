@@ -2,16 +2,28 @@ package plugin
 
 import (
 	"fmt"
+	"log"
 	"maps"
 	"pluginengine/clients"
 	"pluginengine/consts"
 	"pluginengine/utils"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 func Discover(context map[string]interface{}, channel chan map[string]interface{}) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("error in discovery: ", err)
+
+			context[consts.CredentialID] = consts.InvalidCredentials
+
+			context[consts.STATUS] = consts.FAILED
+
+			channel <- context
+		}
+	}()
+
 	logger := utils.NewLogger("plugin", "discovery")
 
 	result := make(map[string]interface{})
@@ -126,7 +138,6 @@ const (
 
 	diskMetrics1 = "(Get-Counter -Counter \"\\PhysicalDisk(*)\\Disk Writes/sec\") |  Select-Object -ExpandProperty CounterSamples  | Measure-Object -Property CookedValue -Sum | Select-Object @{Name='system.disk.io.write.bytes.per.sec';Expression={($_.Sum)}} | fl;" +
 		"Get-WmiObject -Class Win32_LogicalDisk |Select-Object DeviceID, @{Name=\"UsedBytes\"; Expression={[math]::Round(($.Size - $.FreeSpace),3)}} |Measure-Object -Property UsedBytes -Sum  | Select-Object @{Name='system.disk.used.bytes';Expression={($_.Sum)}} | fl;" +
-		"(Get-Counter -Counter \"\\PhysicalDisk(*)\\% Idle Time\")  | Select-Object -ExpandProperty CounterSamples | Select-Object @{Name='system.disk.io.time.percent';Expression={(100 - $_.CookedValue)}} |  Measure-Object -Property system.disk.io.time.percent -Sum | Select-Object @{Name='system.disk.io.time.percent';Expression={($_.Sum)}} | fl;" +
 		"(Get-Counter -Counter \"\\PhysicalDisk(*)\\Disk Writes/sec\") | Select-Object -ExpandProperty CounterSamples | Measure-Object -Property CookedValue -Sum | Select-Object @{Name='system.disk.io.write.ops.per.sec';Expression={($_.Sum)}} | fl;" +
 		"(Get-Counter -Counter \"\\PhysicalDisk(_total)\\Avg. Disk Bytes/Transfer\") | Select-Object -ExpandProperty CounterSamples  | Select-Object @{Name='system.disk.io.bytes.per.sec';Expression={($_.CookedValue)}}  | fl;" +
 		"Get-WmiObject -Class Win32_LogicalDisk | Select-Object -Property @{Label='Total'; expression={($_.Size)}} | Measure-Object -Property Total -Sum | Select-Object @{Name='system.disk.capacity.bytes';Expression={($_.Sum)}}|fl;" +
@@ -177,46 +188,58 @@ const (
 
 func Collect(context map[string]interface{}, channel chan map[string]interface{}) {
 
+	commands := []string{memoryMetrics, cpuMetrics, diskMetrics2, diskMetrics1, systemMetrics, networkMetrics}
+
+	length := len(commands)
+
+	resultChannel := make(chan map[string]interface{}, length)
+
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("error in discovery: ", err)
+
+			context[consts.CredentialID] = consts.InvalidCredentials
+
+			context[consts.STATUS] = consts.FAILED
+
+			channel <- context
+		}
+
+		close(resultChannel)
+	}()
+
 	logger := utils.NewLogger("plugin", "polling")
 
 	logger.Info("Inside the Collect method")
 
-	client := clients.WinRmClient{}
-
-	client.SetContext(context)
-
-	//Establish Connection
-	connectionContext, err := client.EstablishWinRMConnection()
-
-	if err != nil {
-
-		context[consts.ERROR] = utils.Error("Failed to create a winRm Client", consts.ConnectionError)
-
-		context[consts.RESULT] = make(map[string]interface{})
-
-		context[consts.STATUS] = consts.FAILED
-
-		channel <- context
-
-		return
-
-	}
-
-	// Execute commands
-	commands := []string{memoryMetrics, cpuMetrics, diskMetrics2, diskMetrics1, systemMetrics, networkMetrics}
-
 	// Create a wait group to synchronize goroutines
-	var wg sync.WaitGroup
-
-	resultChannel := make(chan map[string]interface{}, len(commands))
+	//var wg sync.WaitGroup
 
 	for _, commands := range commands {
 
-		wg.Add(1) // Increment wait group counter
+		//wg.Add(1) // Increment wait group counter
+		client := clients.WinRmClient{}
+
+		client.SetContext(context)
+
+		//Establish Connection
+		connectionContext, err := client.EstablishWinRMConnection()
+
+		if err != nil {
+
+			context[consts.ERROR] = utils.Error("Failed to create a winRm Client", consts.ConnectionError)
+
+			context[consts.RESULT] = make(map[string]interface{})
+
+			context[consts.STATUS] = consts.FAILED
+
+			channel <- context
+
+		}
 
 		go func(context map[string]interface{}, commands string, channel chan map[string]interface{}) {
 
-			defer wg.Done()
+			//defer wg.Done()
 
 			results := make(map[string]interface{})
 
@@ -224,7 +247,7 @@ func Collect(context map[string]interface{}, channel chan map[string]interface{}
 
 			if err != nil {
 
-				logger.Error(fmt.Sprintf("Error while making connection command %v\n", commands))
+				logger.Error(fmt.Sprint("Error while making connection :  ", err))
 
 				results[consts.ERROR] = utils.Error(err.Error(), consts.ConnectionError)
 
@@ -285,28 +308,27 @@ func Collect(context map[string]interface{}, channel chan map[string]interface{}
 		}(context, commands, resultChannel)
 	}
 
-	// Wait for all goroutines to finish
-	go func() {
-
-		wg.Wait()
-
-		close(resultChannel)
-
-	}()
+	//// Wait for all goroutines to finish
+	//wg.Wait()
 
 	errorContext := make([]map[string]interface{}, 0)
 
 	results := make(map[string]interface{})
 
-	for res := range resultChannel {
+	for length > 0 {
+		select {
+		case result := <-resultChannel:
 
-		if res[consts.ERROR] != nil {
+			if result[consts.ERROR] != nil {
 
-			errorContext = append(errorContext, res[consts.ERROR].(map[string]interface{}))
+				errorContext = append(errorContext, result[consts.ERROR].(map[string]interface{}))
 
-		} else {
+			} else {
 
-			maps.Copy(results, res)
+				maps.Copy(results, result)
+			}
+
+			length--
 		}
 
 	}

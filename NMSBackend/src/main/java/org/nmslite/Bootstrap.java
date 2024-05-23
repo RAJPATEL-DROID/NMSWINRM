@@ -31,10 +31,7 @@ public class Bootstrap {
             {
                 vertx.deployVerticle(APIServer.class.getName())
                         .compose(deployment -> vertx.deployVerticle(DiscoveryEngine.class.getName()))
-                        .compose(deployment ->
-                                vertx.deployVerticle(DiscoveryEngine.class.getName()))
-                        .compose(deployment ->
-                                vertx.deployVerticle(PollingEngine.class.getName()))
+                        .compose(deployment -> vertx.deployVerticle(PollingEngine.class.getName()))
                         .onComplete(status ->
                         {
                             if(status.succeeded())
