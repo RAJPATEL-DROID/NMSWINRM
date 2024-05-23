@@ -122,7 +122,7 @@ public class Constants
 
     public static final String PUBLISHER_PORT = "publisher.zmq.port";
 
-    public static final String ZMQ_ADDRESS  = "tcp://localhost:";
+    public static final String ZMQ_ADDRESS  = "tcp://*:";
 
     public static final String RECEIVER_PORT = "receiver.zmq.port";
 

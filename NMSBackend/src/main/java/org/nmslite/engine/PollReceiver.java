@@ -24,9 +24,9 @@ public class PollReceiver extends AbstractVerticle {
 
         var poller = zContext.createSocket(SocketType.PULL);
 
-        poller.connect(Constants.ZMQ_ADDRESS + Utils.config.get(Constants.RECEIVER_PORT));
+        poller.bind(Constants.ZMQ_ADDRESS + Utils.config.get(Constants.RECEIVER_PORT));
 
-        long pollTime = Long.parseLong(Utils.config.get(Constants.DEFAULT_POLL_TIME).toString()) * 1000;
+        long pollTime = 60 * 1000;
 
         var vertx = Bootstrap.getVertx();
 
@@ -36,7 +36,6 @@ public class PollReceiver extends AbstractVerticle {
                 var result = poller.recvStr(ZMQ.DONTWAIT);
 
                 if (result == null) {
-
                     logger.info("No Result Available");
                 } else {
 
