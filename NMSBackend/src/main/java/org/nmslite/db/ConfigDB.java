@@ -229,6 +229,8 @@ public class ConfigDB {
                 }
 
                 reply.put(Constants.PROVISION_DEVICES, provisionedMonitors);
+
+
             }
             default ->
             {
@@ -340,6 +342,7 @@ public class ConfigDB {
 
                 reply.put(Constants.CONTEXT, details);
 
+                logger.trace("Read  Request for type {} of id {} performed, sending details {}", type, id,details);
             }
             default ->
             {

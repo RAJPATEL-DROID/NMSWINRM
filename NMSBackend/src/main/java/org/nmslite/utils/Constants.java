@@ -120,10 +120,10 @@ public class Constants
 
     public static final String UNIQUE_SEPARATOR  = "~@@~";
 
-    public static final String DEPLOYMENT_TYPE= "deployment.type";
+    public static final String PUBLISHER_PORT = "publisher.zmq.port";
 
-    public static final String MASTER = "master";
+    public static final String ZMQ_ADDRESS  = "tcp://localhost:";
 
-    public static final String POLLER = "poller";
+    public static final String RECEIVER_PORT = "receiver.zmq.port";
 
 }

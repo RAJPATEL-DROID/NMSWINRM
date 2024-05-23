@@ -15,6 +15,7 @@ target/
 /Logs/
 *.json
 /PluginEngine/
+/Result/
 
 ### Eclipse ###
 .apt_generated
@@ -40,4 +41,5 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
 

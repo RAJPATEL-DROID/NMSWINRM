@@ -9,63 +9,70 @@
 
     <!-- File Appender for Server Logs -->
     <appender name="bootstrap" class="ch.qos.logback.core.FileAppender">
-        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/Bootstrap.log</file>
+        <file>./Logs/Bootstrap.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="server" class="ch.qos.logback.core.FileAppender">
-        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/APIEngine.log</file>
+        <file>./Logs/APIEngine.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="credential" class="ch.qos.logback.core.FileAppender">
-        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/Credential.log</file>
+        <file>./Logs/Credential.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}][%thread] [%-5level] [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="discovery" class="ch.qos.logback.core.FileAppender">
-        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/Discovery.log</file>
+        <file>./Logs/Discovery.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="provision" class="ch.qos.logback.core.FileAppender">
-        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/Provision.log</file>
+        <file>./Logs/Provision.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread]  [%-5level] [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="utils" class="ch.qos.logback.core.FileAppender">
-        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/Utils.log</file>
+        <file>./Logs/Utils.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="discoveryengine" class="ch.qos.logback.core.FileAppender">
-        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/DiscoveryEngine.log</file>
+        <file>./Logs/DiscoveryEngine.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}][%thread] [%-5level] [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name="pollingengine" class="ch.qos.logback.core.FileAppender">
-        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/PollingEngine.log</file>
+    <appender name="PollScheduler" class="ch.qos.logback.core.FileAppender">
+        <file>./Logs/PollScheduler.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="ConfigDB" class="ch.qos.logback.core.FileAppender">
-        <file>/home/raj/Work/NMSWINRMLITE/NMSBackend/Logs/ConfigDB.log</file>
+        <file>./Logs/ConfigDB.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="PollReceiver" class="ch.qos.logback.core.FileAppender">
+        <file>./Logs/PollReceiver.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
         </encoder>
@@ -101,9 +108,14 @@
         <appender-ref ref="discoveryengine"/>
     </logger>
 
-    <logger name="org.nmslite.engine.PollingEngine" level="trace" additivity="false">
-        <appender-ref ref="pollingengine"/>
+    <logger name="org.nmslite.engine.PollScheduler" level="trace" additivity="false">
+        <appender-ref ref="PollScheduler"/>
     </logger>
+
+    <logger name="org.nmslite.engine.PollReceiver" level="trace" additivity="false">
+        <appender-ref ref="PollReceiver"/>
+    </logger>
+
 
     <logger name="org.nmslite.utils.Utils" level="trace" additivity="false">
         <appender-ref ref="utils"/>

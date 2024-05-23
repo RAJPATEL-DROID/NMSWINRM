@@ -3,13 +3,14 @@ package org.nmslite;
 import io.vertx.core.Vertx;
 import org.nmslite.apiserver.APIServer;
 import org.nmslite.engine.DiscoveryEngine;
-import org.nmslite.engine.PollingEngine;
-import org.nmslite.utils.Constants;
+import org.nmslite.engine.PollReceiver;
+import org.nmslite.engine.PollScheduler;
 import org.nmslite.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Bootstrap {
+public class Bootstrap
+{
 
     private static final Logger logger = LoggerFactory.getLogger(Bootstrap.class);
 
@@ -21,49 +22,36 @@ public class Bootstrap {
 
     public static void main(String[] args)
     {
-
-
         logger.info("Starting Backend Server...");
 
 
         Utils.readConfig().onComplete(result ->
         {
-            if(result.succeeded())
+            if (result.succeeded())
             {
-                if (result.succeeded()) {
-                    if (Utils.config.get(Constants.DEPLOYMENT_TYPE).equals(Constants.MASTER)) {
-                        vertx.deployVerticle(APIServer.class.getName())
-                                .compose(deployment ->
-                                        vertx.deployVerticle(DiscoveryEngine.class.getName()))
-                                .compose(deployment ->
-                                        vertx.deployVerticle(PollingEngine.class.getName()))
-                                .onComplete(status ->
-                                {
-                                    if (status.succeeded()) {
-                                        logger.info("Backend Server started successfully...");
-                                    } else {
-                                        logger.error("Failed to start backend server", status.cause());
-                                    }
-                                });
-                    } else {
-                        vertx.deployVerticle(PollingEngine.class.getName())
-                                .onComplete(handler ->
-                                {
-                                    if(handler.succeeded())
-                                    {
-                                        logger.info("Poller started successfully...");
-                                    }
-                                    else
-                                    {
-                                        logger.error("Failed to start poller", handler.cause());
-                                    }
-                                });
-                    })
-                    }
-
+                vertx.deployVerticle(APIServer.class.getName())
+                    .compose(deployment ->
+                            vertx.deployVerticle(DiscoveryEngine.class.getName()))
+                    .compose(deployment ->
+                            vertx.deployVerticle(PollScheduler.class.getName()))
+                    .compose(deployment ->
+                            vertx.deployVerticle(PollReceiver.class.getName()))
+                    .onComplete(status ->
+                    {
+                        if (status.succeeded())
+                        {
+                            logger.info("Backend Server started successfully...");
+                        }
+                        else
+                        {
+                            logger.error("Failed to start backend server", status.cause());
+                        }
+                    });
             }
-
+            else
+            {
+                logger.error("Failed to start backend server", result.cause());
+            };
         });
-
     }
 }
