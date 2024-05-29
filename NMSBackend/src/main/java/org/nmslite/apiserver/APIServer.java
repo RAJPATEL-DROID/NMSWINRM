@@ -115,7 +115,9 @@ public class APIServer extends AbstractVerticle {
 
                                 JsonArray jsonArray = result.result();
 
-                                context.response().setStatusCode(200).putHeader("Content-Type", "application/json").end(jsonArray.encodePrettily());
+                                context.response().setStatusCode(200).putHeader("Content-Type", "application/json");
+                                
+                                context.json(jsonArray);
                             }
                             else
                             {
@@ -124,7 +126,9 @@ public class APIServer extends AbstractVerticle {
 
                                 JsonObject response = Utils.errorHandler("Failed to read file", Constants.BAD_REQUEST, errorMessage);
 
-                                context.response().setStatusCode(Constants.BAD_REQUEST).end(response.encodePrettily());
+                                context.response().setStatusCode(Constants.BAD_REQUEST);
+
+                                context.json(response);
 
                             }
                         });
