@@ -95,18 +95,6 @@ public class Utils {
         return response;
     };
 
-    public static JsonObject getData(RequestType type,Long id)
-    {
-
-        var response = ConfigDB.read(type,id);
-
-        response.put(Constants.ERROR_CODE, Constants.SUCCESS_CODE);
-
-        response.put(Constants.STATUS, Constants.SUCCESS);
-
-        return response;
-    };
-
     public static JsonArray createContext(JsonObject targets, String requestType, Logger logger)
     {
 
@@ -189,20 +177,6 @@ public class Utils {
         }
         return false;
 
-    }
-
-    public static void checkAvailability(JsonArray pollingArray)
-    {
-        for(var element : pollingArray)
-        {
-            var discoveryInfo = new JsonObject(element.toString());
-
-            if (!Utils.checkAvailability(discoveryInfo.getString(Constants.IP) ) )
-            {
-                pollingArray.remove(element);
-            }
-
-        }
     }
 
     public static JsonArray spawnPluginEngine(String encodedString, Integer size)
@@ -299,7 +273,7 @@ public class Utils {
 
     public static void writeToFile(String ip, JsonObject result)
     {
-        String fileName = Constants.FILE_PATH +  ip + ".text";
+        String fileName = Constants.FILE_PATH +  ip + ".txt";
 
         LocalDateTime now = LocalDateTime.now();
 

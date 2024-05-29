@@ -13,9 +13,9 @@ import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
-public class PollReceiver extends AbstractVerticle {
+public class Receiver extends AbstractVerticle {
 
-    private static final Logger logger = LoggerFactory.getLogger(PollReceiver.class);
+    private static final Logger logger = LoggerFactory.getLogger(Receiver.class);
 
     @Override
     public void start(Promise<Void> startPromise) {

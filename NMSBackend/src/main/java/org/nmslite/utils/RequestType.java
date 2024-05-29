@@ -8,5 +8,6 @@ public enum RequestType
     DISCOVERY_RUN,
     DISCOVERY_RUN_RESULT,
     PROVISION,
-    POLLING
+    POLLING,
+    POLLING_RESULT,
 }

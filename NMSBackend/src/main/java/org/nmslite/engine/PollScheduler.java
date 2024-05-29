@@ -29,7 +29,7 @@ public class PollScheduler extends AbstractVerticle
 
             socket.bind(Constants.ZMQ_ADDRESS + Utils.config.get(Constants.PUBLISHER_PORT));
 
-            long pollTime  =  Long.parseLong(Utils.config.get(Constants.DEFAULT_POLL_TIME).toString()) * 1000;
+            long pollTime  =  Long.parseLong(Utils.config.get(Constants.POLL_TIME).toString()) * 1000;
 
             logger.trace("Default Poll time set to {} ", pollTime);
 

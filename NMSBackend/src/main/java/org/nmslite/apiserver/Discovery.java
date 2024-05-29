@@ -74,7 +74,8 @@ public class Discovery {
 
                 if (request.containsKey(Constants.IP) && request.containsKey(Constants.DEVICE_PORT)
                         && request.containsKey(Constants.CREDENTIAL_IDS) && request.containsKey(Constants.NAME)
-                        && !(request.getLong(Constants.DEVICE_PORT) < 1)) {
+                        && !(request.getLong(Constants.DEVICE_PORT) < 1))
+                {
 
                     if (!request.getString(Constants.IP).isEmpty()
 

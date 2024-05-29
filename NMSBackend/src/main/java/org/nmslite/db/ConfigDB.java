@@ -19,9 +19,9 @@ public class ConfigDB {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigDB.class);
 
-    private static final ConcurrentHashMap<Long, JsonObject> credentialsProfiles = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<Long, JsonObject> credentialsProfiles = new ConcurrentHashMap<>();
 
-    private static final ConcurrentHashMap<Long, JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<Long, JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
 
     private static final ConcurrentHashMap<String, JsonObject> validDevices = new ConcurrentHashMap<>();
 
@@ -142,10 +142,22 @@ public class ConfigDB {
                         {
                             if(device.getLong(Constants.DISCOVERY_ID).equals(id))
                             {
-                                provisionedDevices.add(id);
+                                if(!provisionedDevices.contains(id))
+                                {
+                                    provisionedDevices.add(id);
 
-                                logger.trace("Device provisioned successfully for {}", id);
+                                    logger.trace("Device provisioned successfully for {}", id);
 
+                                }
+                                else
+                                {
+                                    reply.put(Constants.STATUS,Constants.FAILED);
+
+                                    reply.put(Constants.ERROR,"Device already provisioned");
+
+                                    logger.trace("Device already provisioned successfully for {}", id);
+
+                                }
                                 return reply;
                             }
                         }
@@ -343,6 +355,25 @@ public class ConfigDB {
                 reply.put(Constants.CONTEXT, details);
 
                 logger.trace("Read  Request for type {} of id {} performed, sending details {}", type, id,details);
+            }
+            case POLLING_RESULT ->
+            {
+                if(provisionedDevices.contains(id))
+                {
+                    reply.put(Constants.IP,discoveryProfiles.get(id).getString(Constants.IP));
+
+                    logger.trace("Device with id {} is having Ip {}", id, discoveryProfiles.get(id).getString(Constants.IP));
+
+                }
+                else
+                {
+                    reply.put(Constants.STATUS, Constants.FAILED);
+
+                    logger.error("Device is not Provisioned!!");
+
+                }
+
+                return reply;
             }
             default ->
             {

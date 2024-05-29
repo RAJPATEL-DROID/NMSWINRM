@@ -112,7 +112,7 @@
         <appender-ref ref="PollScheduler"/>
     </logger>
 
-    <logger name="org.nmslite.engine.PollReceiver" level="trace" additivity="false">
+    <logger name="org.nmslite.engine.Receiver" level="trace" additivity="false">
         <appender-ref ref="PollReceiver"/>
     </logger>
 

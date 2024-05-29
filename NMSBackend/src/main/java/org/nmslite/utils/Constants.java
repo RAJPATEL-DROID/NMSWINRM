@@ -20,9 +20,7 @@ public class Constants
 
     public static final String PROVISION_ROUTE ="/provision/*";
 
-    public static final String  DEFAULT_POLL_TIME = "default.poll.time";
-
-    public static final String MAX_BATCH_SIZE = "max.batch.size";
+    public static final String POLL_TIME = "poll.time";
 
     public static final String PLUGIN_PROCESS_TIMEOUT =   "plugin.process.timeout";
 
@@ -32,9 +30,7 @@ public class Constants
 
     public static final Integer SUCCESS_CODE = 000;
 
-    public static final String INVALID_CREDENTIALS = "-1";
-
-    public static final String MESSAGE_SEPARATOR = "@";
+    public static final Integer INVALID_CREDENTIALS = -1;
 
     public static final String ID = "id";
 
@@ -47,8 +43,6 @@ public class Constants
     public static final String CONFIG_FILE = "/config/config.json";
 
     public static final String CONFIG_PATH = System.getProperty(USER_DIRECTORY) + CONFIG_FILE;
-
-    public static final String CREDENTIAL = "credential";
 
     public static final String CREDENTIAL_ID = "credential.id";
 
@@ -72,19 +66,11 @@ public class Constants
 
     public static final String DEVICE_PORT = "device.port";
 
-    public static final String DISCOVERY_RUN = "discovery.run";
-
-    public static final String DISCOVERY_RUN_RESULT = "discovery.run.result";
-
     public static final String POLLING = "polling";
-
-    public static final String VALID_DISCOVERY = "valid_discovery";
 
     public static final String CREDENTIAL_PROFILES = "credential.profiles";
 
     public static final String CONTEXT = "context";
-
-    public static final String PROVISION = "provision";
 
     public static final String PROVISION_DEVICES = "provision.devices";
 

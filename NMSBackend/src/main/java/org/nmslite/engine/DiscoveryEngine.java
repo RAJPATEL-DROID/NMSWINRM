@@ -39,15 +39,16 @@ public class DiscoveryEngine extends AbstractVerticle
                 vertx.executeBlocking(future ->
                 {
 
-                    if (!Utils.checkAvailability(discoveryInfo.getString(Constants.IP)))
-                    {
-                        logger.info("Device is not reachable {}", discoveryInfo.getString(Constants.IP));
-
-                    }
-                    else
-                    {
-                        future.complete();
-                    }
+//                    if (!Utils.checkAvailability(discoveryInfo.getString(Constants.IP)))
+//                    {
+//                        logger.info("Device is not reachable {}", discoveryInfo.getString(Constants.IP));
+//
+//                    }
+//                    else
+//                    {
+//                        future.complete();
+//                    }
+                    future.complete();
                 }).onComplete(handler ->
                         {
                             if (handler.succeeded())
@@ -97,9 +98,9 @@ public class DiscoveryEngine extends AbstractVerticle
                                             else
                                             {
 
-                                                var credentialID = result.getLong(Constants.CREDENTIAL_ID);
+                                                var credentialID = result.getInteger(Constants.CREDENTIAL_ID);
 
-                                                if (credentialID < 1)
+                                                if (credentialID.equals(Constants.INVALID_CREDENTIALS))
                                                 {
                                                     logger.info("all given credentials are invalid. request: {}", context);
 
