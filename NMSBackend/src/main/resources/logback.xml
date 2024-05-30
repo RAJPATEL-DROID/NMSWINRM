@@ -78,6 +78,20 @@
         </encoder>
     </appender>
 
+    <appender name="Scheduler" class="ch.qos.logback.core.FileAppender">
+        <file>./Logs/Scheduler.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="Receiver" class="ch.qos.logback.core.FileAppender">
+        <file>./Logs/Receiver.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
 
     <!-- Root Logger -->
     <root level="info">
@@ -123,6 +137,15 @@
 
     <logger name = "org.nmslite.db.ConfigDB" level="trace" additivity="false">
         <appender-ref ref="ConfigDB"/>
+    </logger>
+
+    <!-- Logger for Server -->
+    <logger name="org.nmslite.engine.Scheduler" level="trace" additivity="false">
+        <appender-ref ref="Scheduler"/>
+    </logger>
+
+    <logger name="org.nmslite.engine.Receiver" level="trace" additivity="false">
+        <appender-ref ref="Receiver"/>
     </logger>
 
     <logger name="org.nmslite.Bootstrap" level="trace" additivity="false">

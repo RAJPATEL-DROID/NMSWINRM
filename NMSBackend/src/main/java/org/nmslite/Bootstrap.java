@@ -2,10 +2,7 @@ package org.nmslite;
 
 import io.vertx.core.Vertx;
 import org.nmslite.apiserver.APIServer;
-import org.nmslite.engine.DiscoveryEngine;
-import org.nmslite.engine.PollReceiver;
-import org.nmslite.engine.PollScheduler;
-import org.nmslite.engine.Scheduler;
+import org.nmslite.engine.*;
 import org.nmslite.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +32,10 @@ public class Bootstrap
                             vertx.deployVerticle(DiscoveryEngine.class.getName()))
 //                    .compose(deployment ->
 //                            vertx.deployVerticle(PollScheduler.class.getName()))
-                    .compose(deployment ->
-                            vertx.deployVerticle(PollReceiver.class.getName()))
+//                    .compose(deployment ->
+//                            vertx.deployVerticle(PollReceiver.class.getName()))
+                    .compose(deployment->
+                                vertx.deployVerticle(Receiver.class.getName()) )
                     .compose(deployment ->
                             vertx.deployVerticle(Scheduler.class.getName()))
                     .onComplete(status ->

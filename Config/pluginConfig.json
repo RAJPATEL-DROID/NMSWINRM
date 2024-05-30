@@ -1,0 +1,5 @@
+{
+  "host.ip" : "localhost",
+  "zmq.pull.port" : 5558,
+  "zmq.push.port"  : 5559
+}

@@ -13,6 +13,8 @@ import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
+import java.util.Base64;
+
 public class PollReceiver extends AbstractVerticle {
 
     private static final Logger logger = LoggerFactory.getLogger(PollReceiver.class);
@@ -26,7 +28,7 @@ public class PollReceiver extends AbstractVerticle {
 
         poller.bind(Constants.ZMQ_ADDRESS + Utils.config.get(Constants.RECEIVER_PORT));
 
-        long pollTime = 60 * 1000;
+        long pollTime = 40 * 1000;
 
         var vertx = Bootstrap.getVertx();
 

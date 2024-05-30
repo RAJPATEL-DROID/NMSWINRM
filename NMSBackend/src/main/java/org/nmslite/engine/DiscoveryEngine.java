@@ -33,123 +33,97 @@ public class DiscoveryEngine extends AbstractVerticle
 
                 var discoveryContext = new JsonObject(msg.body().toString());
 
-                // Check Availability of Device
-                var discoveryInfo = discoveryContext.getJsonObject(Constants.DISCOVERY_DATA);
+                var context = Utils.createContext(discoveryContext, Constants.DISCOVERY, logger);
 
-                vertx.executeBlocking(future ->
+                logger.trace("Received Context Array from the Util : {}", context);
+
+                if (!context.isEmpty())
                 {
 
-//                    if (!Utils.checkAvailability(discoveryInfo.getString(Constants.IP)))
-//                    {
-//                        logger.info("Device is not reachable {}", discoveryInfo.getString(Constants.IP));
-//
-//                    }
-//                    else
-//                    {
-//                        future.complete();
-//                    }
-                    future.complete();
-                }).onComplete(handler ->
+                    var count = context.size();
+
+                    var message = context.toString();
+
+                    var encodedString = Base64.getEncoder().encodeToString(message.getBytes());
+
+                    vertx.executeBlocking(future ->
+                    {
+
+                        var replyJson = Utils.spawnPluginEngine(encodedString, count);
+
+                        if (replyJson == null) {
+                            future.fail("Process timed out");
+                        } else {
+                            future.complete(replyJson);
+                        }
+
+                    }).onComplete(deviceStatus ->
+                    {
+                        if (deviceStatus.succeeded())
                         {
-                            if (handler.succeeded())
+                            var replyJson = new JsonArray(String.valueOf(deviceStatus.result()));
+
+                            logger.info("Data Received from Device : {}", replyJson);
+
+                            var result = replyJson.getJsonObject(0);
+
+                            if (result.containsKey(Constants.ERROR))
                             {
 
-                                var context = Utils.createContext(discoveryContext, Constants.DISCOVERY, logger);
+                                logger.info("Discovery Run Process Failed {} ", result.getString(Constants.ERROR));
 
-                                logger.trace("Received Context Array from the Util : {}", context);
+                                logger.info("Error Message : {}", result.getString(Constants.ERROR_MESSAGE));
 
-                                if (!context.isEmpty())
-                                {
-
-                                    var count = context.size();
-
-                                    var message = context.toString();
-
-                                    var encodedString = Base64.getEncoder().encodeToString(message.getBytes());
-
-                                    vertx.executeBlocking(future ->
-                                    {
-                                        var replyJson = Utils.spawnPluginEngine(encodedString, count);
-
-                                        if (replyJson == null) {
-                                            future.fail("Process timed out");
-                                        } else {
-                                            future.complete(replyJson);
-                                        }
-
-                                    }).onComplete(deviceStatus ->
-                                    {
-                                        if (deviceStatus.succeeded())
-                                        {
-                                            var replyJson = new JsonArray(String.valueOf(deviceStatus.result()));
-
-                                            logger.info("Data Received from Device : {}", replyJson);
-
-                                            var result = replyJson.getJsonObject(0);
-
-                                            if (result.containsKey(Constants.ERROR))
-                                            {
-
-                                                logger.info("Discovery Run Process Failed {} ", result.getString(Constants.ERROR));
-
-                                                logger.info("Error Message : {}", result.getString(Constants.ERROR_MESSAGE));
-
-                                            }
-                                            else
-                                            {
-
-                                                var credentialID = result.getInteger(Constants.CREDENTIAL_ID);
-
-                                                if (credentialID.equals(Constants.INVALID_CREDENTIALS))
-                                                {
-                                                    logger.info("all given credentials are invalid. request: {}", context);
-
-                                                    logger.info("Discovery Run Process Failed, No Valid Credential ID Found");
-
-                                                }
-                                                else
-                                                {
-                                                    var validDevice = new JsonObject()
-
-                                                            .put(Constants.DISCOVERY_ID, discoveryContext.getLong(Constants.ID))
-
-                                                            .put(Constants.CREDENTIAL_ID, credentialID)
-
-                                                            .put(Constants.IP, result.getString(Constants.IP));
-
-                                                    var response = ConfigDB.create(VALID_DISCOVERY, validDevice);
-
-
-                                                    if (response.containsKey(Constants.ERROR))
-                                                    {
-
-                                                        logger.info("Discovery Run Process Failed {} ", response.getString(Constants.ERROR));
-
-                                                    }
-                                                    else
-                                                    {
-                                                        logger.info("Discovery Run Process Success");
-                                                    }
-                                                }
-                                            }
-                                        } else {
-                                            logger.info("Discovery Run Process Failed {}", deviceStatus.cause().getMessage());
-                                        }
-                                    });
-                                }
-                                else
-                                {
-
-                                    logger.error("Error in creating context!!!");
-
-                                }
                             }
                             else
                             {
-                                logger.info("Device Discovery Failed");
+
+                                var credentialID = result.getInteger(Constants.CREDENTIAL_ID);
+
+                                if (credentialID.equals(Constants.INVALID_CREDENTIALS))
+                                {
+                                    logger.info("all given credentials are invalid. request: {}", context);
+
+                                    logger.info("Discovery Run Process Failed, No Valid Credential ID Found");
+
+                                }
+                                else
+                                {
+                                    var validDevice = new JsonObject()
+
+                                            .put(Constants.DISCOVERY_ID, discoveryContext.getLong(Constants.ID))
+
+                                            .put(Constants.CREDENTIAL_ID, credentialID)
+
+                                            .put(Constants.IP, result.getString(Constants.IP));
+
+                                    var response = ConfigDB.create(VALID_DISCOVERY, validDevice);
+
+
+                                    if (response.containsKey(Constants.ERROR))
+                                    {
+
+                                        logger.info("Discovery Run Process Failed {} ", response.getString(Constants.ERROR));
+
+                                    }
+                                    else
+                                    {
+                                        logger.info("Discovery Run Process Success");
+                                    }
+                                }
                             }
+                        } else {
+                            logger.info("Discovery Run Process Failed {}", deviceStatus.cause().getMessage());
                         }
-                );
+                    });
+                }
+                else
+                {
+
+                    logger.error("Error in creating context!!!");
+
+                }
+
             }
             catch (Exception exception)
             {

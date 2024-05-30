@@ -89,14 +89,20 @@ func ToString(data any) string {
 
 // Config struct to hold configuration values
 type Config struct {
-	Host string `json:"host"`
-	Port string `json:"port"`
+	PublisherHost string `json:"host.ip"`
+	PushPort      int    `json:"zmq.push.port"`
+	PullPort      int    `json:"zmq.pull.port"`
 }
 
 func ReadConfig(filename string) (Config, error) {
+	var logger = NewLogger("utils", "readConfig")
+
 	var config Config
 	file, err := os.Open(filename)
 	if err != nil {
+
+		logger.Fatal(fmt.Sprint("Error opening file : ", err))
+
 		return config, err
 	}
 	defer file.Close()
@@ -104,6 +110,9 @@ func ReadConfig(filename string) (Config, error) {
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&config)
 	if err != nil {
+
+		logger.Fatal(fmt.Sprint("Error decoding file : ", err))
+
 		return config, err
 	}
 

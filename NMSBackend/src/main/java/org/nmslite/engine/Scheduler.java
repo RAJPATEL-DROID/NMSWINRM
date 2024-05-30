@@ -2,6 +2,7 @@ package org.nmslite.engine;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonArray;
 import org.nmslite.db.ConfigDB;
 import org.nmslite.utils.Constants;
 import org.nmslite.utils.Utils;
@@ -10,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+
+import java.util.Base64;
 
 import static org.nmslite.utils.RequestType.POLLING;
 import static org.nmslite.utils.RequestType.PROVISION;
@@ -25,8 +28,10 @@ public class Scheduler extends AbstractVerticle {
 
         ZMQ.Socket reqSocket = zcontext.createSocket(SocketType.PUSH);
 
+        reqSocket.setHWM(10);
+
         // Bind the REQ socket to a local address
-        reqSocket.bind(Constants.ZMQ_ADDRESS + Constants.PUSH_PORT);
+        reqSocket.bind(Constants.ZMQ_ADDRESS +Utils.config.get(Constants.PUSH_PORT));
 
 
         long pollTime = Long.parseLong(Utils.config.get(Constants.POLL_TIME).toString()) * 1000;
@@ -46,15 +51,24 @@ public class Scheduler extends AbstractVerticle {
                 }
                 else
                 {
+                    var pollingArray = new JsonArray();
+
                     //  Get Discovery and Credential Details of Each Device ( Create Context ) :
                     for (var id : result.getJsonArray(Constants.PROVISION_DEVICES))
                     {
                         var res = ConfigDB.read(POLLING, Long.parseLong(id.toString()));
-                        var deviceContext = res.getJsonObject(Constants.CONTEXT).toString();
 
-                        // Send each device context as a separate message to the REQ socket
-                        reqSocket.send(deviceContext.getBytes(ZMQ.CHARSET), ZMQ.DONTWAIT);
+                        pollingArray.add(res.getJsonObject(Constants.CONTEXT));
+
                     }
+
+                    logger.info("Sending context Array : {}" , pollingArray);
+
+                    var context = Base64.getEncoder().encode(pollingArray.toString().getBytes(zmq.ZMQ.CHARSET));
+
+                    // Send each device context as a separate message to the REQ socket
+                    reqSocket.send(context, ZMQ.DONTWAIT);
+
                 }
             } catch (Exception exception)
             {
