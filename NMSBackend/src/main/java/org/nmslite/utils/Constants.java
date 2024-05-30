@@ -22,8 +22,6 @@ public class Constants
 
     public static final String POLL_TIME = "poll.time";
 
-    public static final String PLUGIN_PROCESS_TIMEOUT =   "plugin.process.timeout";
-
     public static final Integer OK = 200;
 
     public static final Integer BAD_REQUEST = 400;

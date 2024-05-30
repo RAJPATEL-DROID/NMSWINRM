@@ -33,7 +33,7 @@ public class Receiver extends AbstractVerticle {
 
         poller.bind(Constants.ZMQ_ADDRESS + Utils.config.get(Constants.RECEIVER_PORT));
 
-        long pollTime = 40 * 1000;
+        long pollTime = 30 * 1000;
 
         var vertx = Bootstrap.getVertx();
 

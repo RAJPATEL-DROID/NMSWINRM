@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Base64;
 
 import static org.nmslite.utils.RequestType.*;
 
@@ -22,7 +23,8 @@ public class Discovery {
 
     private static Router router;
 
-    public void init(Vertx vertx) {
+    public void init(Vertx vertx)
+    {
         router = Router.router(vertx);
 
         router.route().handler(BodyHandler.create());
@@ -177,9 +179,27 @@ public class Discovery {
                 }
                 else
                 {
-                    Vertx vertx = Bootstrap.getVertx();
 
-                    vertx.eventBus().send(Constants.EVENT_RUN_DISCOVERY, entries.getJsonObject(Constants.CONTEXT));
+                    var contextData = Utils.createContext(entries.getJsonObject(Constants.CONTEXT), Constants.DISCOVERY, logger);
+
+                    logger.trace("Received Context Array from the Util : {}", contextData);
+
+                    if (!contextData.isEmpty())
+                    {
+                        var message = contextData.toString();
+
+                        var encodedContext = Base64.getEncoder().encode(message.getBytes());
+
+                        Utils.sendContext(encodedContext);
+
+                    }
+                    else
+                    {
+
+                        logger.error("Error in creating context!!!");
+
+                    }
+
 
                     var response = new JsonObject();
 

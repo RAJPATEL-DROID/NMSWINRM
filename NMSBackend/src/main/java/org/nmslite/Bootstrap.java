@@ -28,12 +28,6 @@ public class Bootstrap
             if (result.succeeded())
             {
                 vertx.deployVerticle(APIServer.class.getName())
-                    .compose(deployment ->
-                            vertx.deployVerticle(DiscoveryEngine.class.getName()))
-//                    .compose(deployment ->
-//                            vertx.deployVerticle(PollScheduler.class.getName()))
-//                    .compose(deployment ->
-//                            vertx.deployVerticle(PollReceiver.class.getName()))
                     .compose(deployment->
                                 vertx.deployVerticle(Receiver.class.getName()) )
                     .compose(deployment ->

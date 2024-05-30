@@ -66,13 +66,13 @@ public class Utils {
                         config.put(key, data.getValue(key));
                     }
 
-                    reqSocket.setHWM(10);
-
                     // Bind the REQ socket to a local address
                     reqSocket.bind(Constants.ZMQ_ADDRESS +Utils.config.get(Constants.PUSH_PORT));
 
                     logger.info("Config File Read Successfully...");
-                    logger.info(config.toString());
+
+                    logger.trace(config.toString());
+
                     promise.complete();
                 }
                 else
@@ -191,98 +191,6 @@ public class Utils {
 
     }
 
-    public static JsonArray spawnPluginEngine(String encodedString, Integer size)
-    {
-        try
-        {
-            var currentDir = System.getProperty(Constants.USER_DIRECTORY);
-
-            var processBuilder = new java.lang.ProcessBuilder(currentDir + Constants.PLUGIN_APPLICATION_PATH, encodedString);
-
-            processBuilder.redirectErrorStream(true);
-
-            var process = processBuilder.start();
-
-            logger.info(String.valueOf(TimeUnit.SECONDS.toNanos(Long.parseLong(Utils.config.get(Constants.PLUGIN_PROCESS_TIMEOUT).toString()))));
-
-            var exitStatus = process.waitFor(Long.parseLong(Utils.config.get(Constants.PLUGIN_PROCESS_TIMEOUT).toString()), TimeUnit.SECONDS);
-
-            if(!exitStatus)
-            {
-
-                process.destroyForcibly();
-
-                logger.error("Process Timed out, Killed Forcibly!!");
-
-                return null;
-
-            }
-
-            // Read the output of the command
-            var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-            var buffer = Buffer.buffer();
-
-            String line;
-
-            var count = 0;
-
-            while ((line = reader.readLine()) != null && count <= size) {
-                buffer.appendString(line);
-                if (line.contains(Constants.UNIQUE_SEPARATOR)) {
-                    count++;
-                }
-            }
-
-            logger.info("Context Received from the Plugin {} ", buffer);
-
-            var contexts = buffer.toString().split(Constants.UNIQUE_SEPARATOR);
-
-            var replyJson = new JsonArray();
-
-            for (var context : contexts)
-            {
-
-                byte[] decodedBytes = Base64.getDecoder().decode(context);
-
-                var decodedString = new String(decodedBytes);
-
-                logger.info("Received Data from Device : {}" ,decodedString);
-
-                replyJson.add(new JsonObject(decodedString));
-
-            }
-
-
-
-            return replyJson;
-
-        }
-        catch (Exception exception)
-        {
-            logger.error(exception.getMessage());
-
-            logger.error(Arrays.toString(exception.getStackTrace()));
-
-            var error = new JsonArray();
-
-            var response = new JsonObject();
-
-            response.put(Constants.ERROR, "Discovery Run Request failed")
-
-                    .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
-
-                    .put(Constants.ERROR_MESSAGE,"Exception Occurred during Spawning Process Builder" )
-
-                    .put(Constants.STATUS, Constants.FAILED);
-
-            error.add(response);
-
-            return error;
-
-        }
-    }
-
     public static void writeToFile(String ip, JsonObject result)
     {
         String fileName = Constants.FILE_PATH +  ip + ".txt";
@@ -307,7 +215,6 @@ public class Utils {
     {
            reqSocket.send(context,ZMQ.DONTWAIT);
     }
-
 
 }
 
