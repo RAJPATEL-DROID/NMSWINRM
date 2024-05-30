@@ -24,14 +24,15 @@ public class Scheduler extends AbstractVerticle {
     @Override
     public void start(Promise<Void> startPromise)
     {
-        ZContext zcontext = new ZContext();
 
-        ZMQ.Socket reqSocket = zcontext.createSocket(SocketType.PUSH);
-
-        reqSocket.setHWM(10);
+//        ZContext zcontext = new ZContext();
+//
+//        ZMQ.Socket reqSocket = zcontext.createSocket(SocketType.PUSH);
+//
+//        reqSocket.setHWM(10);
 
         // Bind the REQ socket to a local address
-        reqSocket.bind(Constants.ZMQ_ADDRESS +Utils.config.get(Constants.PUSH_PORT));
+//        reqSocket.bind(Constants.ZMQ_ADDRESS +Utils.config.get(Constants.PUSH_PORT));
 
 
         long pollTime = Long.parseLong(Utils.config.get(Constants.POLL_TIME).toString()) * 1000;
@@ -66,8 +67,9 @@ public class Scheduler extends AbstractVerticle {
 
                     var context = Base64.getEncoder().encode(pollingArray.toString().getBytes(zmq.ZMQ.CHARSET));
 
-                    // Send each device context as a separate message to the REQ socket
-                    reqSocket.send(context, ZMQ.DONTWAIT);
+                    Utils.sendContext(context);
+
+//                    reqSocket.send(context, ZMQ.DONTWAIT);
 
                 }
             } catch (Exception exception)

@@ -177,9 +177,12 @@ public class Provision extends AbstractVerticle {
 
                                 JsonArray jsonArray = result.result();
 
+                                var response = new JsonObject();
+                                response.put(Constants.STATUS,Constants.SUCCESS)
+                                                .put(Constants.RESULT,jsonArray);
                                 context.response().setStatusCode(200).putHeader("Content-Type", "application/json");
 
-                                context.json(jsonArray);
+                                context.json(response);
                             }
                             else
                             {

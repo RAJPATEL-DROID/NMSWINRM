@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	zmq "github.com/pebbe/zmq4"
-	"os"
 	"pluginengine/consts"
 	"pluginengine/plugin"
 	"pluginengine/utils"
@@ -16,71 +15,26 @@ func main() {
 
 	if err != nil {
 		fmt.Printf("Error reading config file: %s\n", err)
-		os.Exit(1)
+		return
 	}
 
 	// Set Up Logger
 	logger := utils.NewLogger("bootstrap", "gobootstrap")
 
-	//// If Context is not received in the argument
-	//if len(os.Args) == 1 {
-	//	// error
-	//	logger.Fatal(fmt.Sprintf("No context is passed"))
-	//
-	//	context := make(map[string]interface{}, 1)
-	//
-	//	errors := make([]map[string]interface{}, 0)
-	//
-	//	errors = append(errors, utils.Error(consts.ContextMissingCode, consts.ContextMissingError))
-	//
-	//	context[consts.ERROR] = errors
-	//
-	//	context[consts.STATUS] = consts.FAILED
-	//
-	//	context[consts.RESULT] = make([]map[string]interface{}, 0)
-	//
-	//	result, err := utils.Encode(context)
-	//	if err != nil {
-	//
-	//		logger.Fatal(fmt.Sprintf("Error while encoding context: %v", err))
-	//
-	//		errors = append(errors, utils.Error(consts.JsonErrorCode, err.Error()))
-	//
-	//		fmt.Println(context)
-	//
-	//		return
-	//	}
-	//
-	//	fmt.Println(result)
-	//
-	//	return
-	//}
-
 	// Initialize ZeroMQ context
 	zmqContext, err := zmq.NewContext()
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Error creating ZeroMQ context: %s", err))
+		return
 	}
-	defer func(zmqContext *zmq.Context) {
-		err := zmqContext.Term()
-		if err != nil {
-			logger.Fatal(fmt.Sprintf("Error terminating ZeroMQ context: %s", err))
-		}
-	}(zmqContext)
 
 	// Initialize ZeroMQ Pull socket for receiving messages
 	pullSocket, err := zmqContext.NewSocket(zmq.PULL)
 
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Error creating ZeroMQ socket: %s", err))
+		return
 	}
-
-	defer func(socket *zmq.Socket) {
-		err := socket.Close()
-		if err != nil {
-			logger.Fatal(fmt.Sprintf("Error closing ZeroMQ socket: %s", err))
-		}
-	}(pullSocket)
 
 	// Connect to Pull Socket at Address from Config
 	pullAddress := fmt.Sprintf("tcp://%s:%d", config.PublisherHost, config.PullPort)
@@ -89,6 +43,7 @@ func main() {
 
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Error binding ZeroMQ socket: %s", err))
+		return
 	}
 
 	logger.Info(fmt.Sprintf("Push Socket Connected to %s address", pullAddress))
@@ -97,13 +52,23 @@ func main() {
 	pushSocket, err := zmqContext.NewSocket(zmq.PUSH)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Error creating PUSH socket: %v", err))
+		return
 	}
-	defer func(socket *zmq.Socket) {
-		err := socket.Close()
+
+	defer func(pushSocket *zmq.Socket, pullSocket *zmq.Socket, zmqContext *zmq.Context) {
+		err := pushSocket.Close()
 		if err != nil {
-			logger.Fatal(fmt.Sprintf("Error closing ZeroMQ socket: %s", err))
+			logger.Fatal(fmt.Sprintf("Error closing Push socket: %s", err))
 		}
-	}(pushSocket)
+		err = pullSocket.Close()
+		if err != nil {
+			logger.Fatal(fmt.Sprintf("Error Closing Pull Socker ; %s", err))
+		}
+		err = zmqContext.Term()
+		if err != nil {
+			logger.Fatal(fmt.Sprintf("Error terminating ZMQ Context: %s", err))
+		}
+	}(pushSocket, pullSocket, zmqContext)
 
 	pushAddress := fmt.Sprintf("tcp://%s:%d", config.PublisherHost, config.PushPort)
 
@@ -111,6 +76,7 @@ func main() {
 
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Error binding PUSH socket: %v", err))
+		return
 	}
 
 	logger.Info(fmt.Sprintf("Push Socket Connected to %s address", pushAddress))
@@ -122,7 +88,7 @@ func main() {
 	channel := make(chan map[string]interface{})
 
 	defer close(channel)
-	// TODO : Receive Context Array From Socket
+
 	for {
 		data, err := pullSocket.Recv(0)
 
@@ -183,11 +149,11 @@ func main() {
 
 				encodedResult, _ := utils.Encode(result)
 
-				pushSocket.Send(encodedResult, 0)
+				_, err := pushSocket.Send(encodedResult, 0)
 
-				//fmt.Println(encodedResult)
-				//
-				//fmt.Println(consts.UniqueSeparator)
+				if err != nil {
+					logger.Fatal(fmt.Sprintf("Error in Sending the Result: %s", err))
+				}
 
 				contextsLength--
 
@@ -195,29 +161,4 @@ func main() {
 		}
 
 	}
-
-	//// Decode the received context from command line argument
-	//contexts, err := utils.Decode(os.Args[1])
-	//
-	//// Error in decoding the context
-	//if err != nil {
-	//	logger.Fatal(fmt.Sprintf("Error decoding context: %s", err))
-	//
-	//	context := make(map[string]interface{}, 1)
-	//
-	//	errors := make([]map[string]interface{}, 0)
-	//
-	//	errors = append(errors, utils.Error(consts.DecodeErrorCode, err.Error()))
-	//
-	//	context[consts.STATUS] = consts.FAILED
-	//
-	//	context[consts.RESULT] = make([]map[string]interface{}, 0)
-	//
-	//	result, _ := utils.Encode(context)
-	//
-	//	fmt.Println(result)
-	//
-	//	return
-	//}
-
 }

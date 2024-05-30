@@ -10,6 +10,9 @@ import org.nmslite.Bootstrap;
 import org.nmslite.db.ConfigDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
 
 import java.io.BufferedReader;
 import java.io.FileWriter;
@@ -26,15 +29,17 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Utils {
 
-    private Utils(){
-        throw new IllegalStateException("Utils class");
-    }
+    public static ZContext zcontext = new ZContext();
+
+    public static ZMQ.Socket reqSocket = zcontext.createSocket(SocketType.PUSH);
 
     private static final Logger logger = LoggerFactory.getLogger(Utils.class);
 
     public static ConcurrentMap<String,Object> config= new ConcurrentHashMap<>();
 
     private static final AtomicLong counter = new AtomicLong(0);
+
+
 
     public static long getId()
     {
@@ -60,6 +65,11 @@ public class Utils {
                     {
                         config.put(key, data.getValue(key));
                     }
+
+                    reqSocket.setHWM(10);
+
+                    // Bind the REQ socket to a local address
+                    reqSocket.bind(Constants.ZMQ_ADDRESS +Utils.config.get(Constants.PUSH_PORT));
 
                     logger.info("Config File Read Successfully...");
                     logger.info(config.toString());
@@ -106,6 +116,8 @@ public class Utils {
             var context = new JsonObject();
 
             var discoveryInfo = targets.getJsonObject(Constants.DISCOVERY_DATA);
+
+            context.put(Constants.DISCOVERY_ID, targets.getLong(Constants.ID));
 
             context.put(Constants.REQUEST_TYPE, requestType);
 
@@ -291,6 +303,10 @@ public class Utils {
         }
     }
 
+    public static void sendContext(byte[] context)
+    {
+           reqSocket.send(context,ZMQ.DONTWAIT);
+    }
 
 
 }

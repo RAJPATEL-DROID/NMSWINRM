@@ -1,6 +1,7 @@
 package org.nmslite;
 
 import io.vertx.core.Vertx;
+import jdk.jshell.execution.Util;
 import org.nmslite.apiserver.APIServer;
 import org.nmslite.engine.*;
 import org.nmslite.utils.Utils;
@@ -21,7 +22,6 @@ public class Bootstrap
     public static void main(String[] args)
     {
         logger.info("Starting Backend Server...");
-
 
         Utils.readConfig().onComplete(result ->
         {

@@ -6,6 +6,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.nmslite.Bootstrap;
+import org.nmslite.db.ConfigDB;
 import org.nmslite.utils.Constants;
 import org.nmslite.utils.Utils;
 import org.slf4j.Logger;
@@ -15,6 +16,8 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.util.Base64;
+
+import static org.nmslite.utils.RequestType.VALID_DISCOVERY;
 
 public class Receiver extends AbstractVerticle {
 
@@ -46,9 +49,7 @@ public class Receiver extends AbstractVerticle {
                 }
                 else
                 {
-
                     var decodedBytes = Base64.getDecoder().decode(result);
-
 
                     var decodedString = new String(decodedBytes);
 
@@ -56,36 +57,95 @@ public class Receiver extends AbstractVerticle {
 
                     logger.info("Result Received : {} ", received);
 
-                    vertx.executeBlocking(future ->
+                    if(received.getString(Constants.REQUEST_TYPE).equals(Constants.DISCOVERY))
                     {
 
-                        String ip = received.getString(Constants.IP);
 
-                        String status = received.getString(Constants.STATUS);
+                        logger.info("Data Received from Device : {}", received);
 
-                        logger.trace("Status of device is : {}", status);
+//                        var result = replyJson.getJsonObject(0);
 
-                        if (status.equals(Constants.SUCCESS))
+                        if (received.containsKey(Constants.ERROR))
                         {
 
-                            JsonObject pollResult = received.getJsonObject(Constants.RESULT);
+                            logger.info("Discovery Run Process Failed {} ", received.getString(Constants.ERROR));
 
-                            // Write result to a file
-                            Utils.writeToFile(ip, pollResult);
+                            logger.info("Error Message : {}", received.getString(Constants.ERROR_MESSAGE));
 
                         }
-                        else if (status.equals(Constants.FAILED))
+                        else
                         {
 
-                            JsonArray errors = received.getJsonArray(Constants.ERRORS);
-                            for (int j = 0; j < errors.size(); j++) {
+                            var credentialID = received.getInteger(Constants.CREDENTIAL_ID);
 
-                                JsonObject error = errors.getJsonObject(j);
+                            if (credentialID.equals(Constants.INVALID_CREDENTIALS))
+                            {
+                                logger.info("all given credentials are invalid. request: {}", context);
 
-                                Utils.writeToFile(ip, error);
+                                logger.info("Discovery Run Process Failed, No Valid Credential ID Found");
+
+                            }
+                            else
+                            {
+                                var validDevice = new JsonObject()
+
+                                        .put(Constants.DISCOVERY_ID, received.getLong(Constants.DISCOVERY_ID))
+
+                                        .put(Constants.CREDENTIAL_ID, credentialID)
+
+                                        .put(Constants.IP, received.getString(Constants.IP));
+
+                                var response = ConfigDB.create(VALID_DISCOVERY, validDevice);
+
+
+                                if (response.containsKey(Constants.ERROR))
+                                {
+                                    logger.info("Discovery Run Process Failed {} ", response.getString(Constants.ERROR));
+
+                                }
+                                else
+                                {
+                                    logger.info("Discovery Run Process Success");
+                                }
                             }
                         }
-                    });
+
+                    }
+                    else
+                    {
+                        vertx.executeBlocking(future ->
+                        {
+
+                            String ip = received.getString(Constants.IP);
+
+                            String status = received.getString(Constants.STATUS);
+
+                            logger.trace("Status of device is : {}", status);
+
+                            if (status.equals(Constants.SUCCESS))
+                            {
+
+                                JsonObject pollResult = received.getJsonObject(Constants.RESULT);
+
+                                // Write result to a file
+                                Utils.writeToFile(ip, pollResult);
+
+                            }
+                            else if (status.equals(Constants.FAILED))
+                            {
+
+                                JsonArray errors = received.getJsonArray(Constants.ERRORS);
+                                for (int j = 0; j < errors.size(); j++) {
+
+                                    JsonObject error = errors.getJsonObject(j);
+
+                                    Utils.writeToFile(ip, error);
+                                }
+                            }
+                        });
+                    }
+
+
                 }
             }
             catch (Exception exception)
