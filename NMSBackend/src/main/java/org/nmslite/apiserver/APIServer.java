@@ -57,7 +57,7 @@ public class APIServer extends AbstractVerticle {
 
             router.route(Constants.PROVISION_ROUTE).subRouter(provision.getRouter());
 
-            router.route("/data/:id").handler(this::getData);
+//            router.route("/data/:id").handler(this::getData);
 
             server.requestHandler(router).listen().onComplete(res -> {
 
@@ -83,89 +83,6 @@ public class APIServer extends AbstractVerticle {
         }
     }
 
-    private void getData(RoutingContext context)
-    {
-        try
-        {
-            if (!context.request().getParam(Constants.ID).isEmpty() && !(Long.parseLong(context.request().getParam(Constants.ID)) < 1))
-            {
-                if(ConfigDB.discoveryProfiles.containsKey( Long.parseLong( context.request().getParam( Constants.ID) ) ) )
-                {
-                    var ip = ConfigDB.read(POLLING_RESULT, Long.parseLong(context.request().getParam(Constants.ID)));
 
-                    if (ip.containsKey(Constants.STATUS))
-                    {
-                        var response = Utils.errorHandler("Device not provisioned!", Constants.BAD_REQUEST, "Provision the device first!!");
-
-                        context.response().setStatusCode(Constants.BAD_REQUEST);
-
-                        context.json(response);
-
-                    }
-                    else
-                    {
-                        String ipAddress = ip.getString(Constants.IP);
-
-                        FileReader fileReader = new FileReader();
-
-                        fileReader.readLastNLinesByIP(context.vertx(), ipAddress, 5).onComplete(result ->
-                        {
-                            if (result.succeeded())
-                            {
-
-                                JsonArray jsonArray = result.result();
-
-                                context.response().setStatusCode(200).putHeader("Content-Type", "application/json");
-                                
-                                context.json(jsonArray);
-                            }
-                            else
-                            {
-
-                                String errorMessage = result.cause().getMessage();
-
-                                JsonObject response = Utils.errorHandler("Failed to read file", Constants.BAD_REQUEST, errorMessage);
-
-                                context.response().setStatusCode(Constants.BAD_REQUEST);
-
-                                context.json(response);
-
-                            }
-                        });
-                    }
-                }
-                else
-                {
-                    var response = Utils.errorHandler("Invalid Discovery Id Provided", Constants.BAD_REQUEST, "Provide Valid Discovery Id");
-
-                    context.response().setStatusCode(Constants.BAD_REQUEST);
-
-                    context.json(response);
-
-                }
-
-            }
-            else
-            {
-                var response = Utils.errorHandler("Parameter Not Provided", Constants.BAD_REQUEST, "Provide Valid Parameter Value");
-
-                context.response().setStatusCode(Constants.BAD_REQUEST);
-
-                context.json(response);
-            }
-        }
-        catch (Exception exception)
-        {
-
-            logger.error("Error :", exception);
-
-            context.response().setStatusCode(500);
-
-            var response = Utils.errorHandler(exception.toString(), Constants.BAD_REQUEST, exception.getMessage());
-
-            context.json(response);
-        }
-
-    }
 }
 

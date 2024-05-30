@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 )
 
@@ -84,6 +85,29 @@ func ToString(data any) string {
 
 		return fmt.Sprintf("%v", data)
 	}
+}
+
+// Config struct to hold configuration values
+type Config struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
+}
+
+func ReadConfig(filename string) (Config, error) {
+	var config Config
+	file, err := os.Open(filename)
+	if err != nil {
+		return config, err
+	}
+	defer file.Close()
+
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&config)
+	if err != nil {
+		return config, err
+	}
+
+	return config, nil
 }
 
 var MetricsMap = map[string]string{

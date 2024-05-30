@@ -106,10 +106,13 @@ public class Constants
 
     public static final String UNIQUE_SEPARATOR  = "~@@~";
 
-    public static final String PUBLISHER_PORT = "publisher.zmq.port";
+    public static final String PUBLISHER_PORT = "zmq.publisher.port";
+
+    public static final String PUSH_PORT = "zmq.push.port";
 
     public static final String ZMQ_ADDRESS  = "tcp://*:";
 
     public static final String RECEIVER_PORT = "receiver.zmq.port";
 
+    public static final String NUM_OF_ROWS = "num.of.rows";
 }

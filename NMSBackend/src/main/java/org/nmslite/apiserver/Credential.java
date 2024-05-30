@@ -65,19 +65,18 @@ public class Credential {
         {
             if (!data.isEmpty())
             {
-                var request = new JsonObject(data.toString());
 
-                if (request.containsKey(Constants.USERNAME) && request.containsKey(Constants.PASSWORD) && request.containsKey(Constants.NAME))
+                if (data.containsKey(Constants.USERNAME) && data.containsKey(Constants.PASSWORD) && data.containsKey(Constants.NAME))
                 {
 
-                    if (!request.getString(Constants.USERNAME).isEmpty() && !request.getString(Constants.PASSWORD).isEmpty() && !request.getString(Constants.NAME).isEmpty())
+                    if (!data.getString(Constants.USERNAME).isEmpty() && !data.getString(Constants.PASSWORD).isEmpty() && !data.getString(Constants.NAME).isEmpty())
                     {
 
-                        var response = ConfigDB.create(CREDENTIAL,request);
+                        var response = ConfigDB.create(CREDENTIAL, data);
 
                         if (response.containsKey(Constants.STATUS))
                         {
-                            response = Utils.errorHandler("Credential Profile Not Created",Constants.BAD_REQUEST,"Credential with Name " + request.getString(Constants.NAME) + " already exists");
+                            response = Utils.errorHandler("Credential Profile Not Created",Constants.BAD_REQUEST,"Credential with Name " + data.getString(Constants.NAME) + " already exists");
 
                             context.response().setStatusCode(Constants.BAD_REQUEST);
                         }

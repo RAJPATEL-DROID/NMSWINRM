@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/masterzen/winrm v0.0.0-20231227165926-e811dad5ac77
 	golang.org/x/net v0.25.0
+	github.com/pebbe/zmq4 v1.2.11
 )
 
 require (
