@@ -4,6 +4,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.file.AsyncFile;
+import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.nmslite.Bootstrap;
@@ -21,25 +23,17 @@ import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Utils {
-
-    public static ZContext zcontext = new ZContext();
-
-    public static ZMQ.Socket reqSocket = zcontext.createSocket(SocketType.PUSH);
-
+public class Utils
+{
     private static final Logger logger = LoggerFactory.getLogger(Utils.class);
 
     public static ConcurrentMap<String,Object> config= new ConcurrentHashMap<>();
 
     private static final AtomicLong counter = new AtomicLong(0);
-
-
 
     public static long getId()
     {
@@ -65,9 +59,6 @@ public class Utils {
                     {
                         config.put(key, data.getValue(key));
                     }
-
-                    // Bind the REQ socket to a local address
-                    reqSocket.bind(Constants.ZMQ_ADDRESS +Utils.config.get(Constants.PUSH_PORT));
 
                     logger.info("Config File Read Successfully...");
 
@@ -191,30 +182,52 @@ public class Utils {
 
     }
 
-    public static void writeToFile(String ip, JsonObject result)
-    {
-        String fileName = Constants.FILE_PATH +  ip + ".txt";
+    public static void writeToFileAsync(String ip, JsonObject result) {
+
+        Vertx vertx = Bootstrap.getVertx();
+
+        String fileName = Constants.FILE_PATH + ip + ".txt";
 
         LocalDateTime now = LocalDateTime.now();
 
         String formattedDateTime = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
-        try (FileWriter fileWriter = new FileWriter(fileName,true))
-        {
-            fileWriter.write("{ \"" + formattedDateTime + "\" : " + result.toString() + "}\n");
+        String data = "{ \"" + formattedDateTime + "\" : " + result.toString() + "}\n";
 
-            logger.info("Result successfully written to file: {} " , fileName);
-        }
-        catch (IOException exception)
-        {
-            logger.error("Error writing result to file: {}" , exception.getMessage());
-        }
+        vertx.fileSystem().open(fileName, new OpenOptions().setAppend(true), asyncResult -> {
+            if (asyncResult.succeeded()) {
+
+                AsyncFile file = asyncResult.result();
+
+                Buffer buffer = Buffer.buffer(data);
+
+                file.write(buffer, writeResult ->
+                {
+                    if (writeResult.succeeded())
+                    {
+                        logger.info("Result successfully written to file: {}", fileName);
+                    }
+                    else
+                    {
+                        logger.error("Error writing result to file: {}", writeResult.cause().getMessage());
+
+                    }
+
+                    file.close(closeResult ->
+                    {
+                        if (closeResult.failed())
+                        {
+                            logger.error("Error closing file: {}", closeResult.cause().getMessage());
+                        }
+                    });
+
+                });
+            }
+            else
+            {
+                logger.error("Error opening file: {}", asyncResult.cause().getMessage());
+            }
+        });
     }
-
-    public static void sendContext(byte[] context)
-    {
-           reqSocket.send(context,ZMQ.DONTWAIT);
-    }
-
 }
 

@@ -1,10 +1,11 @@
 package org.nmslite;
 
 import io.vertx.core.Vertx;
-import jdk.jshell.execution.Util;
 import org.nmslite.apiserver.APIServer;
 import org.nmslite.engine.*;
+import org.nmslite.utils.ResponseProcessor;
 import org.nmslite.utils.Utils;
+import org.nmslite.utils.ZMQRouter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,14 +29,31 @@ public class Bootstrap
             if (result.succeeded())
             {
                 vertx.deployVerticle(APIServer.class.getName())
-                    .compose(deployment->
-                                vertx.deployVerticle(Receiver.class.getName()) )
-                    .compose(deployment ->
-                            vertx.deployVerticle(Scheduler.class.getName()))
+//                    .compose(deployment->
+//                                vertx.deployVerticle(Receiver.class.getName()) )
+//                    .compose(deployment ->
+//                            vertx.deployVerticle(Scheduler.class.getName()))
                     .onComplete(status ->
                     {
                         if (status.succeeded())
                         {
+
+                            try {
+
+                                new ZMQRouter();
+
+                                Scheduler scheduler = new Scheduler();
+                                scheduler.schedule();
+
+                                ResponseProcessor receiver = new ResponseProcessor();
+                                receiver.receive();
+
+                            }
+                            catch (Exception exception)
+                            {
+                                logger.error("Failed to Make ZMQ Socket Connections", exception);
+                            }
+
                             logger.info("Backend Server started successfully...");
                         }
                         else
@@ -49,5 +67,8 @@ public class Bootstrap
                 logger.error("Failed to start backend server", result.cause());
             };
         });
+
+
+
     }
 }

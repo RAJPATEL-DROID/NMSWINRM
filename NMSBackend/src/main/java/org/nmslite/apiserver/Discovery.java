@@ -188,9 +188,10 @@ public class Discovery {
                     {
                         var message = contextData.toString();
 
-                        var encodedContext = Base64.getEncoder().encode(message.getBytes());
+                        var encodedContext = Base64.getEncoder().encodeToString(message.getBytes());
 
-                        Utils.sendContext(encodedContext);
+
+                        Bootstrap.getVertx().eventBus().send(Constants.ZMQ_PUSH,encodedContext);
 
                     }
                     else

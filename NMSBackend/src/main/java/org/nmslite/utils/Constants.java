@@ -113,4 +113,6 @@ public class Constants
     public static final String RECEIVER_PORT = "receiver.zmq.port";
 
     public static final String NUM_OF_ROWS = "num.of.rows";
+
+    public static final String ZMQ_PUSH = "zmq.push";
 }

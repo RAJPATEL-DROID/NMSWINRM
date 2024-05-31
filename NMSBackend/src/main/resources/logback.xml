@@ -57,7 +57,12 @@
         </encoder>
     </appender>
 
-
+    <appender name="FileReader" class="ch.qos.logback.core.FileAppender">
+        <file>./Logs/FileReader.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
 
     <appender name="Scheduler" class="ch.qos.logback.core.FileAppender">
         <file>./Logs/Scheduler.log</file>
@@ -66,8 +71,15 @@
         </encoder>
     </appender>
 
-    <appender name="Receiver" class="ch.qos.logback.core.FileAppender">
-        <file>./Logs/Receiver.log</file>
+    <appender name="ResponseProcessor" class="ch.qos.logback.core.FileAppender">
+        <file>./Logs/ResponseProcessor.log</file>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ZMQ" class="ch.qos.logback.core.FileAppender">
+        <file>./Logs/ZMQ.log</file>
         <encoder>
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] [%-5level] [%file:%line] %msg%n</pattern>
         </encoder>
@@ -112,8 +124,18 @@
         <appender-ref ref="Scheduler"/>
     </logger>
 
-    <logger name="org.nmslite.engine.Receiver" level="trace" additivity="false">
-        <appender-ref ref="Receiver"/>
+
+    <logger name="org.nmslite.utils.ResponseProcessor" level="trace" additivity="false">
+        <appender-ref ref="ResponseProcessor"/>
+    </logger>
+
+    <logger name="org.nmslite.utils.ZMQRouter" level="trace" additivity="false">
+        <appender-ref ref="ZMQ"/>
+    </logger>
+
+
+    <logger name="org.nmslite.utils.FileReader" level="trace" additivity="false">
+        <appender-ref ref="FileReader"/>
     </logger>
 
     <logger name="org.nmslite.Bootstrap" level="trace" additivity="false">

@@ -170,34 +170,30 @@ public class Provision extends AbstractVerticle {
                             numLines = 5;
                         }
 
-                        fileReader.readLastNLinesByIP(context.vertx(), ipAddress, numLines).onComplete(result ->
+                        JsonArray jsonArray = fileReader.readLastNLinesByIP(ipAddress,numLines);
+
+                        JsonObject response;
+
+                        if(jsonArray != null)
                         {
-                            if (result.succeeded())
-                            {
+                            response = new JsonObject();
 
-                                JsonArray jsonArray = result.result();
-
-                                var response = new JsonObject();
-                                response.put(Constants.STATUS,Constants.SUCCESS)
+                            response.put(Constants.STATUS,Constants.SUCCESS)
                                                 .put(Constants.RESULT,jsonArray);
-                                context.response().setStatusCode(200).putHeader("Content-Type", "application/json");
 
-                                context.json(response);
-                            }
-                            else
-                            {
+                            context.response().setStatusCode(200).putHeader("Content-Type", "application/json");
 
-                                String errorMessage = result.cause().getMessage();
+                        }
+                        else
+                        {
 
-                                JsonObject response = Utils.errorHandler("Failed to read file", Constants.BAD_REQUEST, errorMessage);
+                            response = Utils.errorHandler("Failed to fetch Data", Constants.BAD_REQUEST, "Unable to read file");
 
-                                context.response().setStatusCode(Constants.BAD_REQUEST);
+                            context.response().setStatusCode(Constants.BAD_REQUEST);
 
-                                context.json(response);
+                        }
 
-                            }
-                        });
-
+                        context.json(response);
                     }
                 }
                 else

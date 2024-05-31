@@ -96,6 +96,8 @@ func Discover(context map[string]interface{}, channel chan map[string]interface{
 			}
 		}
 
+		logger.Info(fmt.Sprintf("Discovery Request Successfull : %s ", result))
+
 		if len(result) > 0 {
 
 			context[consts.STATUS] = consts.SUCCESS
