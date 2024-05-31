@@ -3,8 +3,7 @@ package main
 import (
 	"fmt"
 	zmq "github.com/pebbe/zmq4"
-	"pluginengine/consts"
-	"pluginengine/plugin"
+	"pluginengine/processor"
 	"pluginengine/utils"
 )
 
@@ -28,7 +27,6 @@ func main() {
 		return
 	}
 
-	// Initialize ZeroMQ Pull socket for receiving messages
 	pullSocket, err := zmqContext.NewSocket(zmq.PULL)
 
 	if err != nil {
@@ -36,7 +34,6 @@ func main() {
 		return
 	}
 
-	// Connect to Pull Socket at Address from Config
 	pullAddress := fmt.Sprintf("tcp://%s:%d", config.PublisherHost, config.PullPort)
 
 	err = pullSocket.Connect(pullAddress)
@@ -48,7 +45,6 @@ func main() {
 
 	logger.Info(fmt.Sprintf("Push Socket Connected to %s address", pullAddress))
 
-	// Create PUSH socket and connect it to the desired address
 	pushSocket, err := zmqContext.NewSocket(zmq.PUSH)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Error creating PUSH socket: %v", err))
@@ -60,14 +56,19 @@ func main() {
 		if err != nil {
 			logger.Fatal(fmt.Sprintf("Error closing Push socket: %s", err))
 		}
+
 		err = pullSocket.Close()
+
 		if err != nil {
 			logger.Fatal(fmt.Sprintf("Error Closing Pull Socker ; %s", err))
 		}
+
 		err = zmqContext.Term()
+
 		if err != nil {
 			logger.Fatal(fmt.Sprintf("Error terminating ZMQ Context: %s", err))
 		}
+
 	}(pushSocket, pullSocket, zmqContext)
 
 	pushAddress := fmt.Sprintf("tcp://%s:%d", config.PublisherHost, config.PushPort)
@@ -85,9 +86,9 @@ func main() {
 
 	logger.Info("Plugin engine initialized...")
 
-	zmqrecv := make(chan string, 3)
+	zmqrecv := make(chan string)
 
-	zmqsend := make(chan string, 3)
+	zmqsend := make(chan string)
 
 	go func(socket *zmq.Socket, zmqrecv chan string) {
 		for {
@@ -107,12 +108,10 @@ func main() {
 
 	go func(socket *zmq.Socket, zmqsend chan string) {
 		for {
-			select {
-			case data := <-zmqsend:
-				_, err := socket.Send(data, 0)
-				if err != nil {
-					logger.Fatal(fmt.Sprintf("Error Sending Result to Main App %s", err))
-				}
+			data := <-zmqsend
+			_, err := socket.Send(data, 0)
+			if err != nil {
+				logger.Fatal(fmt.Sprintf("Error Sending Result to Main App %s", err))
 			}
 		}
 	}(pushSocket, zmqsend)
@@ -121,67 +120,8 @@ func main() {
 		select {
 		case data := <-zmqrecv:
 
-			go func(data string, zmqsend chan string) {
+			go processor.ProcessContext(data, zmqsend)
 
-				contexts, err := utils.Decode(data)
-
-				// Error in decoding the context
-				if err != nil {
-					logger.Fatal(fmt.Sprintf("Error decoding context: %s", err))
-					return
-				}
-
-				internalChannel := make(chan map[string]interface{}, len(contexts))
-
-				defer close(internalChannel)
-
-				contextsLength := len(contexts)
-
-				for _, context := range contexts {
-
-					logger.Info(fmt.Sprintf("Context: %s", context))
-
-					// if invalid Request Type -> decrease the count till which we are waiting in for select
-
-					if context[consts.RequestType] == consts.DISCOVERY {
-
-						go plugin.Discover(context, internalChannel)
-
-					} else if context[consts.RequestType] == consts.POLLING {
-
-						go plugin.Collect(context, internalChannel)
-
-					} else {
-						// Decrement Counter and also print this error and add the unique identifier
-						errors := make([]map[string]interface{}, 0)
-
-						errors = append(errors, utils.Error("Invalid Request Type", consts.InvalidRequestTypeErrorCode))
-
-						context[consts.ERROR] = errors
-
-						context[consts.STATUS] = consts.FAILED
-
-						context[consts.RESULT] = make([]map[string]interface{}, 0)
-
-						// Encode and Print on Command Line
-						internalChannel <- context
-					}
-				}
-
-				for contextsLength > 0 {
-					select {
-
-					case result := <-internalChannel:
-
-						encodedResult, _ := utils.Encode(result)
-
-						zmqsend <- encodedResult
-
-						contextsLength--
-					}
-				}
-
-			}(data, zmqsend)
 		}
 
 	}
