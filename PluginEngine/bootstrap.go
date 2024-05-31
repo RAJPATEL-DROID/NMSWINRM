@@ -85,79 +85,103 @@ func main() {
 
 	logger.Info("Plugin engine initialized...")
 
-	channel := make(chan map[string]interface{})
+	zmqrecv := make(chan string, 3)
 
-	defer close(channel)
+	zmqsend := make(chan string, 3)
+
+	go func(socket *zmq.Socket, zmqrecv chan string) {
+		for {
+
+			data, err := socket.Recv(0)
+
+			if err != nil {
+				logger.Fatal(fmt.Sprintf("Error receiving contexts: %s", err))
+
+				continue
+			}
+
+			zmqrecv <- data
+		}
+
+	}(pullSocket, zmqrecv)
+
+	go func(socket *zmq.Socket, zmqsend chan string) {
+		for {
+			select {
+			case data := <-zmqsend:
+				_, err := socket.Send(data, 0)
+				if err != nil {
+					logger.Fatal(fmt.Sprintf("Error Sending Result to Main App %s", err))
+				}
+			}
+		}
+	}(pushSocket, zmqsend)
 
 	for {
-		data, err := pullSocket.Recv(0)
+		select {
+		case data := <-zmqrecv:
 
-		if err != nil {
-			logger.Fatal(fmt.Sprintf("Error receiving contexts: %s", err))
+			go func(data string, zmqsend chan string) {
 
-			continue
-		}
+				contexts, err := utils.Decode(data)
 
-		contexts, err := utils.Decode(data)
-
-		// Error in decoding the context
-		if err != nil {
-			logger.Fatal(fmt.Sprintf("Error decoding context: %s", err))
-
-			continue
-		}
-
-		channel = make(chan map[string]interface{}, len(contexts))
-
-		contextsLength := len(contexts)
-
-		for _, context := range contexts {
-
-			logger.Info(fmt.Sprintf("Context: %s", context))
-
-			// if invalid Request Type -> decrease the count till which we are waiting in for select
-
-			if context[consts.RequestType] == consts.DISCOVERY {
-
-				go plugin.Discover(context, channel)
-
-			} else if context[consts.RequestType] == consts.POLLING {
-
-				go plugin.Collect(context, channel)
-
-			} else {
-				// Decrement Counter and also print this error and add the unique identifier
-				errors := make([]map[string]interface{}, 0)
-
-				errors = append(errors, utils.Error("Invalid Request Type", consts.InvalidRequestTypeErrorCode))
-
-				context[consts.ERROR] = errors
-
-				context[consts.STATUS] = consts.FAILED
-
-				context[consts.RESULT] = make([]map[string]interface{}, 0)
-
-				// Encode and Print on Command Line
-				channel <- context
-
-			}
-		}
-
-		for contextsLength > 0 {
-			select {
-			case result := <-channel:
-
-				encodedResult, _ := utils.Encode(result)
-
-				_, err := pushSocket.Send(encodedResult, 0)
-
+				// Error in decoding the context
 				if err != nil {
-					logger.Fatal(fmt.Sprintf("Error in Sending the Result: %s", err))
+					logger.Fatal(fmt.Sprintf("Error decoding context: %s", err))
+					return
 				}
 
-				contextsLength--
+				internalChannel := make(chan map[string]interface{}, len(contexts))
 
-			}
+				defer close(internalChannel)
+
+				contextsLength := len(contexts)
+
+				for _, context := range contexts {
+
+					logger.Info(fmt.Sprintf("Context: %s", context))
+
+					// if invalid Request Type -> decrease the count till which we are waiting in for select
+
+					if context[consts.RequestType] == consts.DISCOVERY {
+
+						go plugin.Discover(context, internalChannel)
+
+					} else if context[consts.RequestType] == consts.POLLING {
+
+						go plugin.Collect(context, internalChannel)
+
+					} else {
+						// Decrement Counter and also print this error and add the unique identifier
+						errors := make([]map[string]interface{}, 0)
+
+						errors = append(errors, utils.Error("Invalid Request Type", consts.InvalidRequestTypeErrorCode))
+
+						context[consts.ERROR] = errors
+
+						context[consts.STATUS] = consts.FAILED
+
+						context[consts.RESULT] = make([]map[string]interface{}, 0)
+
+						// Encode and Print on Command Line
+						internalChannel <- context
+					}
+				}
+
+				for contextsLength > 0 {
+					select {
+
+					case result := <-internalChannel:
+
+						encodedResult, _ := utils.Encode(result)
+
+						zmqsend <- encodedResult
+
+						contextsLength--
+					}
+				}
+
+			}(data, zmqsend)
 		}
 
 	}

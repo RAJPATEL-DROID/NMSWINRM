@@ -99,8 +99,7 @@ public class ResponseProcessor {
                 try {
                     vertx.eventBus().localConsumer(Constants.POLLING,handler ->
                     {
-                       var received = new JsonObject(handler.body().toString());
-
+                        var received = new JsonObject(handler.body().toString());
 
                         String ip = received.getString(Constants.IP);
 
