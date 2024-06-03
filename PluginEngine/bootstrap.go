@@ -14,16 +14,20 @@ func main() {
 	logger := utils.NewLogger("bootstrap", "gobootstrap")
 
 	// Read configuration from config.json
-	config, err := utils.ReadConfig("../Config/pluginConfig.json")
+	config, err := utils.ReadConfig("../config/context.json")
 
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Error reading config file: %s\n", err))
 		return
 	}
 
-	pullSocket, pushSocket, err := server.Start()
+	// Create ZMQ Context and Create Socket for PUSH-PULL Communication
+	err = server.Connect(config)
 
-	server.Connect(pullSocket, pushSocket, config)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("Error connecting to server: %s\n", err))
+		return
+	}
 
 	logger.Info("Plugin engine initialized...")
 
@@ -35,7 +39,7 @@ func main() {
 
 				contexts, err := utils.Decode(data)
 
-				logger := utils.NewLogger("processor", "processContext")
+				logger := utils.NewLogger("bootstrap", "contextprocessor")
 
 				// Error in decoding the context
 				if err != nil {

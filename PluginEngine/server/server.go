@@ -36,15 +36,25 @@ func Start() (receiver *zmq.Socket, sender *zmq.Socket, err error) {
 
 }
 
-func Connect(pull *zmq.Socket, push *zmq.Socket, config utils.Config) {
+func Connect(config utils.Config) error {
 
-	go receiver(pull, config)
+	logger := utils.NewLogger("server", "connect")
 
-	go sender(push, config)
+	pull, push, err := Start()
 
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("Error starting server: %v", err))
+		return err
+	}
+
+	go receive(pull, config)
+
+	go send(push, config)
+
+	return nil
 }
 
-func sender(push *zmq.Socket, config utils.Config) {
+func send(push *zmq.Socket, config utils.Config) {
 
 	logger := utils.NewLogger("server", "Sender")
 
@@ -72,10 +82,9 @@ func sender(push *zmq.Socket, config utils.Config) {
 
 		}
 	}
-
 }
 
-func receiver(pull *zmq.Socket, config utils.Config) {
+func receive(pull *zmq.Socket, config utils.Config) {
 
 	logger := utils.NewLogger("server", "Receiver")
 

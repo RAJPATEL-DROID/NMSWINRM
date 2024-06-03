@@ -307,6 +307,7 @@ func Collect(context map[string]interface{}, channel chan map[string]interface{}
 
 			resultChannel <- results
 
+			return
 		}(context, commands, resultChannel)
 	}
 

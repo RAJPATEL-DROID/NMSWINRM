@@ -9,7 +9,8 @@ import (
 )
 
 func Decode(encodedString string) ([]map[string]interface{}, error) {
-	var logger = NewLogger("utils", "Decode")
+
+	var logger = NewLogger("utils", "decode")
 
 	decodedBytes, err := base64.StdEncoding.DecodeString(encodedString)
 
@@ -34,7 +35,8 @@ func Decode(encodedString string) ([]map[string]interface{}, error) {
 }
 
 func Encode(resultMap map[string]interface{}) (string, error) {
-	var logger = NewLogger("utils", "Encode")
+
+	var logger = NewLogger("utils", "encode")
 
 	jsonBytes, err := json.Marshal(resultMap)
 
@@ -99,13 +101,21 @@ func ReadConfig(filename string) (Config, error) {
 
 	var config Config
 	file, err := os.Open(filename)
+
 	if err != nil {
 
 		logger.Fatal(fmt.Sprint("Error opening file : ", err))
 
 		return config, err
 	}
-	defer file.Close()
+
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			logger.Fatal(fmt.Sprint("Error closing file : ", err))
+			return
+		}
+	}(file)
 
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&config)
