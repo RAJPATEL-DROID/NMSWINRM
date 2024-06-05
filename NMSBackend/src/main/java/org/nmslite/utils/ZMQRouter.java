@@ -69,8 +69,6 @@ public class ZMQRouter
     private void receiveData(ZMQ.Socket poller)
     {
 
-        long pollTime = 15 * 1000;
-
         new Thread( () ->
         {
             while (true){
@@ -90,8 +88,6 @@ public class ZMQRouter
 
                         vertx.eventBus().send(received.getString(Constants.REQUEST_TYPE),received);
                     }
-
-                    Thread.sleep(pollTime);
 
                 }
                 catch (Exception exception)

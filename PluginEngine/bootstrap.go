@@ -41,7 +41,6 @@ func main() {
 
 				logger := utils.NewLogger("bootstrap", "contextprocessor")
 
-				// Error in decoding the context
 				if err != nil {
 					logger.Fatal(fmt.Sprintf("Error decoding context: %s", err))
 					return

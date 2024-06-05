@@ -214,9 +214,6 @@ func Collect(context map[string]interface{}, channel chan map[string]interface{}
 
 	logger.Info("Inside the Collect method")
 
-	// Create a wait group to synchronize goroutines
-	//var wg sync.WaitGroup
-
 	for _, commands := range commands {
 
 		//wg.Add(1) // Increment wait group counter
@@ -240,8 +237,6 @@ func Collect(context map[string]interface{}, channel chan map[string]interface{}
 		}
 
 		go func(context map[string]interface{}, commands string, channel chan map[string]interface{}) {
-
-			//defer wg.Done()
 
 			results := make(map[string]interface{})
 
@@ -275,7 +270,7 @@ func Collect(context map[string]interface{}, channel chan map[string]interface{}
 
 					}
 				}
-				//fmt.Println(len(cleanedSlice))
+
 				logger.Info(fmt.Sprintf("%q", cleanedSlice))
 
 				for _, element := range cleanedSlice {
@@ -310,9 +305,6 @@ func Collect(context map[string]interface{}, channel chan map[string]interface{}
 			return
 		}(context, commands, resultChannel)
 	}
-
-	//// Wait for all goroutines to finish
-	//wg.Wait()
 
 	errorContext := make([]map[string]interface{}, 0)
 
