@@ -3,22 +3,23 @@ package main
 import (
 	"fmt"
 	zmq "github.com/pebbe/zmq4"
-	"pluginengine/processor"
+	"pluginengine/consts"
+	"pluginengine/plugin"
 	"pluginengine/utils"
 )
 
 func main() {
 
+	// Set Up Logger
+	logger := utils.NewLogger("bootstrap", "gobootstrap")
+
 	// Read configuration from config.json
 	config, err := utils.ReadConfig("../Config/pluginConfig.json")
 
 	if err != nil {
-		fmt.Printf("Error reading config file: %s\n", err)
+		logger.Error(fmt.Sprintf("Error reading config file: %s\n", err))
 		return
 	}
-
-	// Set Up Logger
-	logger := utils.NewLogger("bootstrap", "gobootstrap")
 
 	// Initialize ZeroMQ context
 	zmqContext, err := zmq.NewContext()
@@ -91,6 +92,16 @@ func main() {
 	zmqsend := make(chan string)
 
 	go func(socket *zmq.Socket, zmqrecv chan string) {
+		defer func() {
+			if err := recover(); err != nil {
+				logger.Fatal(fmt.Sprintf("Error closing ZMQ Context: %s", err))
+			}
+			err = socket.Close()
+			if err != nil {
+				logger.Fatal(fmt.Sprintf("Error closing ZMQ socket: %s", err))
+			}
+			close(zmqrecv)
+		}()
 		for {
 
 			data, err := socket.Recv(0)
@@ -107,6 +118,16 @@ func main() {
 	}(pullSocket, zmqrecv)
 
 	go func(socket *zmq.Socket, zmqsend chan string) {
+		defer func() {
+			if err := recover(); err != nil {
+				logger.Fatal(fmt.Sprintf("Error closing ZMQ Context: %s", err))
+			}
+			err = socket.Close()
+			if err != nil {
+				logger.Fatal(fmt.Sprintf("Error closing ZMQ socket: %s", err))
+			}
+			close(zmqsend)
+		}()
 		for {
 			data := <-zmqsend
 			_, err := socket.Send(data, 0)
@@ -120,7 +141,54 @@ func main() {
 		select {
 		case data := <-zmqrecv:
 
-			go processor.ProcessContext(data, zmqsend)
+			//processor.ProcessContext(data, zmqsend)
+			contexts, err := utils.Decode(data)
+
+			logger := utils.NewLogger("processor", "processContext")
+
+			// Error in decoding the context
+			if err != nil {
+				logger.Fatal(fmt.Sprintf("Error decoding context: %s", err))
+				return
+			}
+
+			internalChannel := make(chan map[string]interface{}, len(contexts))
+
+			defer close(internalChannel)
+
+			contextsLength := len(contexts)
+
+			for _, context := range contexts {
+
+				logger.Info(fmt.Sprintf("Context: %s", context))
+
+				// if invalid Request Type -> decrease the count till which we are waiting in for select
+
+				if context[consts.RequestType] == consts.DISCOVERY {
+
+					go plugin.Discover(context, zmqsend)
+
+				} else if context[consts.RequestType] == consts.POLLING {
+
+					go plugin.Collect(context, zmqsend)
+
+				} else {
+					// Decrement Counter and also print this error and add the unique identifier
+					errors := make([]map[string]interface{}, 0)
+
+					errors = append(errors, utils.Error("Invalid Request Type", consts.InvalidRequestTypeErrorCode))
+
+					context[consts.ERROR] = errors
+
+					context[consts.STATUS] = consts.FAILED
+
+					context[consts.RESULT] = make([]map[string]interface{}, 0)
+
+					encodedResult, _ := utils.Encode(context)
+
+					zmqsend <- encodedResult
+				}
+			}
 
 		}
 

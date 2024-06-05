@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func Discover(context map[string]interface{}, channel chan map[string]interface{}) {
+func Discover(context map[string]interface{}, zmqsend chan string) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println("error in discovery: ", err)
@@ -20,7 +20,11 @@ func Discover(context map[string]interface{}, channel chan map[string]interface{
 
 			context[consts.STATUS] = consts.FAILED
 
-			channel <- context
+			encodedResult, _ := utils.Encode(context)
+
+			zmqsend <- encodedResult
+
+			//zmqsend <- context
 		}
 	}()
 
@@ -115,7 +119,11 @@ func Discover(context map[string]interface{}, channel chan map[string]interface{
 		}
 	}
 
-	channel <- context
+	encodedResult, _ := utils.Encode(context)
+
+	zmqsend <- encodedResult
+
+	//zmqsend <- context
 
 	return
 }
@@ -188,7 +196,7 @@ const (
 		"(Get-Counter -Counter \"\\Memory\\Available Bytes\") | Select-Object -ExpandProperty CounterSamples |  Select-Object @{Name='system.memory.available.bytes';Expression={($_.CookedValue)}} |fl;"
 )
 
-func Collect(context map[string]interface{}, channel chan map[string]interface{}) {
+func Collect(context map[string]interface{}, zmqsend chan string) {
 
 	commands := []string{memoryMetrics, cpuMetrics, diskMetrics2, diskMetrics1, systemMetrics, networkMetrics}
 
@@ -204,7 +212,11 @@ func Collect(context map[string]interface{}, channel chan map[string]interface{}
 
 			context[consts.STATUS] = consts.FAILED
 
-			channel <- context
+			encodedResult, _ := utils.Encode(context)
+
+			zmqsend <- encodedResult
+
+			//zmqsend <- context
 		}
 
 		close(resultChannel)
@@ -231,15 +243,11 @@ func Collect(context map[string]interface{}, channel chan map[string]interface{}
 
 			context[consts.ERROR] = utils.Error("Failed to create a winRm Client", consts.ConnectionError)
 
-			context[consts.RESULT] = make(map[string]interface{})
-
-			context[consts.STATUS] = consts.FAILED
-
-			channel <- context
+			resultChannel <- context
 
 		}
 
-		go func(context map[string]interface{}, commands string, channel chan map[string]interface{}) {
+		go func(context map[string]interface{}, commands string, commandsResult chan map[string]interface{}) {
 
 			//defer wg.Done()
 
@@ -305,7 +313,7 @@ func Collect(context map[string]interface{}, channel chan map[string]interface{}
 
 			}
 
-			resultChannel <- results
+			commandsResult <- results
 
 		}(context, commands, resultChannel)
 	}
@@ -348,8 +356,10 @@ func Collect(context map[string]interface{}, channel chan map[string]interface{}
 		context[consts.STATUS] = consts.SUCCESS
 
 	}
+	encodedResult, _ := utils.Encode(context)
 
-	channel <- context
+	zmqsend <- encodedResult
+	zmqsend <- context
 
 	return
 }

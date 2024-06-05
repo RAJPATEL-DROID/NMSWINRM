@@ -29,10 +29,6 @@ public class Bootstrap
             if (result.succeeded())
             {
                 vertx.deployVerticle(APIServer.class.getName())
-//                    .compose(deployment->
-//                                vertx.deployVerticle(Receiver.class.getName()) )
-//                    .compose(deployment ->
-//                            vertx.deployVerticle(Scheduler.class.getName()))
                     .onComplete(status ->
                     {
                         if (status.succeeded())
