@@ -117,7 +117,7 @@ func ReadConfig(filename string) (Config, error) {
 		return config, err
 	}
 
-	logger.Info(fmt.Sprint("Config Read Successfully"))
+	logger.Info("Config Read Successfully")
 	return config, nil
 }
 

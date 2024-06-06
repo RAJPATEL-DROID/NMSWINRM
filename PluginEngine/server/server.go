@@ -66,7 +66,7 @@ func Connect(config utils.Config) error {
 
 	go send(push, config)
 
-	logger.Info(fmt.Sprintf("ZMQ Receiver and Sender Started..."))
+	logger.Info("ZMQ Receiver and Sender Started...")
 
 	return nil
 }

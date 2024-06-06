@@ -123,7 +123,7 @@ func Discover(context map[string]interface{}) {
 
 	consts.Sender <- encodedResult
 
-	logger.Info(fmt.Sprintf("Result Sent TO ZMQ Sender"))
+	logger.Info("Result Sent TO ZMQ Sender")
 
 	return
 }
@@ -316,23 +316,20 @@ func Collect(context map[string]interface{}) {
 	results := make(map[string]interface{})
 
 	for length > 0 {
-		select {
-		case result := <-resultChannel:
+		
+		result := <-resultChannel
 
-			if result[consts.ERROR] != nil {
+		if result[consts.ERROR] != nil {
 
-				errorContext = append(errorContext, result[consts.ERROR].(map[string]interface{}))
+			errorContext = append(errorContext, result[consts.ERROR].(map[string]interface{}))
 
-			} else {
+		} else {
 
-				maps.Copy(results, result)
-			}
-
-			length--
+			maps.Copy(results, result)
 		}
 
+		length--
 	}
-
 	context[consts.ERROR] = errorContext
 
 	context[consts.RESULT] = results
@@ -350,7 +347,7 @@ func Collect(context map[string]interface{}) {
 
 	consts.Sender <- encodedResult
 
-	logger.Info(fmt.Sprintf("Result Sent TO ZMQ Sender"))
+	logger.Info("Result Sent TO ZMQ Sender")
 
 	return
 }

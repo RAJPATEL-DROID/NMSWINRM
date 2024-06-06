@@ -48,9 +48,18 @@ func write(level, message, directory, component string) {
 		return
 	}
 
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			fmt.Println("Error closing file:", err)
+		}
+	}(file)
 
-	file.WriteString(fmt.Sprintf("%s %s %s\n", currentTime.Format("2006-01-02 15:04:05.999999999"), level, message))
+	_, err = file.WriteString(fmt.Sprintf("%s %s %s\n", currentTime.Format("2006-01-02 15:04:05.999999999"), level, message))
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
 }
 
 func (l *Logger) Info(message string) {
