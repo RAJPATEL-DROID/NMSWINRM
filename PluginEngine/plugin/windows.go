@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func Discover(context map[string]interface{}, zmqsend chan string) {
+func Discover(context map[string]interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println("error in discovery: ", err)
@@ -22,7 +22,7 @@ func Discover(context map[string]interface{}, zmqsend chan string) {
 
 			encodedResult, _ := utils.Encode(context)
 
-			zmqsend <- encodedResult
+			consts.Sender <- encodedResult
 
 			//zmqsend <- context
 		}
@@ -121,9 +121,9 @@ func Discover(context map[string]interface{}, zmqsend chan string) {
 
 	encodedResult, _ := utils.Encode(context)
 
-	zmqsend <- encodedResult
+	consts.Sender <- encodedResult
 
-	//zmqsend <- context
+	logger.Info(fmt.Sprintf("Result Sent TO ZMQ Sender"))
 
 	return
 }
@@ -196,7 +196,7 @@ const (
 		"(Get-Counter -Counter \"\\Memory\\Available Bytes\") | Select-Object -ExpandProperty CounterSamples |  Select-Object @{Name='system.memory.available.bytes';Expression={($_.CookedValue)}} |fl;"
 )
 
-func Collect(context map[string]interface{}, zmqsend chan string) {
+func Collect(context map[string]interface{}) {
 
 	commands := []string{memoryMetrics, cpuMetrics, diskMetrics2, diskMetrics1, systemMetrics, networkMetrics}
 
@@ -214,7 +214,7 @@ func Collect(context map[string]interface{}, zmqsend chan string) {
 
 			encodedResult, _ := utils.Encode(context)
 
-			zmqsend <- encodedResult
+			consts.Sender <- encodedResult
 
 			//zmqsend <- context
 		}
@@ -226,12 +226,8 @@ func Collect(context map[string]interface{}, zmqsend chan string) {
 
 	logger.Info("Inside the Collect method")
 
-	// Create a wait group to synchronize goroutines
-	//var wg sync.WaitGroup
-
 	for _, commands := range commands {
 
-		//wg.Add(1) // Increment wait group counter
 		client := clients.WinRmClient{}
 
 		client.SetContext(context)
@@ -248,8 +244,6 @@ func Collect(context map[string]interface{}, zmqsend chan string) {
 		}
 
 		go func(context map[string]interface{}, commands string, commandsResult chan map[string]interface{}) {
-
-			//defer wg.Done()
 
 			results := make(map[string]interface{})
 
@@ -318,9 +312,6 @@ func Collect(context map[string]interface{}, zmqsend chan string) {
 		}(context, commands, resultChannel)
 	}
 
-	//// Wait for all goroutines to finish
-	//wg.Wait()
-
 	errorContext := make([]map[string]interface{}, 0)
 
 	results := make(map[string]interface{})
@@ -358,8 +349,10 @@ func Collect(context map[string]interface{}, zmqsend chan string) {
 	}
 	encodedResult, _ := utils.Encode(context)
 
-	zmqsend <- encodedResult
-	zmqsend <- context
+	consts.Sender <- encodedResult
+
+	logger.Info(fmt.Sprintf("Result Sent TO ZMQ Sender"))
+	//zmqsend <- context
 
 	return
 }

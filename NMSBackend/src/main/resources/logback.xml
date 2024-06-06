@@ -125,11 +125,11 @@
     </logger>
 
 
-    <logger name="org.nmslite.utils.ResponseProcessor" level="trace" additivity="false">
+    <logger name="org.nmslite.engine.ResponseProcessor" level="trace" additivity="false">
         <appender-ref ref="ResponseProcessor"/>
     </logger>
 
-    <logger name="org.nmslite.utils.ZMQRouter" level="trace" additivity="false">
+    <logger name="org.nmslite.server.ZMQRouter" level="trace" additivity="false">
         <appender-ref ref="ZMQ"/>
     </logger>
 

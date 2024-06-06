@@ -2,10 +2,9 @@ package org.nmslite;
 
 import io.vertx.core.Vertx;
 import org.nmslite.apiserver.APIServer;
-import org.nmslite.engine.*;
-import org.nmslite.utils.ResponseProcessor;
+import org.nmslite.engine.ResponseProcessor;
 import org.nmslite.utils.Utils;
-import org.nmslite.utils.ZMQRouter;
+import org.nmslite.server.ZMQRouter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,32 +23,15 @@ public class Bootstrap
     {
         logger.info("Starting Backend Server...");
 
-        Utils.readConfig().onComplete(result ->
+        if (Utils.readConfig())
         {
-            if (result.succeeded())
-            {
-                vertx.deployVerticle(APIServer.class.getName())
+            vertx.deployVerticle(APIServer.class.getName())
+                    .compose(deploy -> vertx.deployVerticle(ZMQRouter.class.getName()))
+                    .compose(deploy -> vertx.deployVerticle(ResponseProcessor.class.getName()))
                     .onComplete(status ->
                     {
                         if (status.succeeded())
                         {
-
-                            try {
-
-                                new ZMQRouter();
-
-                                Scheduler scheduler = new Scheduler();
-                                scheduler.schedule();
-
-                                ResponseProcessor receiver = new ResponseProcessor();
-                                receiver.receive();
-
-                            }
-                            catch (Exception exception)
-                            {
-                                logger.error("Failed to Make ZMQ Socket Connections", exception);
-                            }
-
                             logger.info("Backend Server started successfully...");
                         }
                         else
@@ -57,12 +39,11 @@ public class Bootstrap
                             logger.error("Failed to start backend server", status.cause());
                         }
                     });
-            }
-            else
-            {
-                logger.error("Failed to start backend server", result.cause());
-            };
-        });
+        }
+        else
+        {
+            logger.error("Failed to start backend server");
+        };
 
 
 

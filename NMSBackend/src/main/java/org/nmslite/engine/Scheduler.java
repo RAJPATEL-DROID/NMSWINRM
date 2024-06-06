@@ -36,12 +36,7 @@ public class Scheduler {
                     var result = ConfigDB.read(PROVISION);
 
                     // We Get Array of Discovery ID of Provisioned Device
-                    if (result.getJsonArray(Constants.PROVISION_DEVICES).isEmpty())
-                    {
-                        logger.info("No Provisioned Device Found.");
-
-                    }
-                    else
+                    if (!result.getJsonArray(Constants.PROVISION_DEVICES).isEmpty())
                     {
                         var pollingArray = new JsonArray();
 
@@ -62,7 +57,7 @@ public class Scheduler {
 
                     }
 
-                    Thread.sleep(pollTime);
+                    // TODO : Find a way to stop for some time.
                 }
                 catch(Exception exception)
                 {

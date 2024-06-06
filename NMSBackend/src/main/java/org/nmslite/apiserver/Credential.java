@@ -19,23 +19,19 @@ public class Credential {
 
     private static Router router;
 
-    public  void init(Vertx vertx) {
-
-        router = Router.router(vertx);
-
-        router.route().handler(BodyHandler.create());
-
-    }
-
-    public Router getRouter()
+    public  void init(Router router)
     {
+
+        Credential.router = router;
+
+        router.route(Constants.CREDENTIAL_ROUTE).subRouter(Credential.router);
+
         router.post(Constants.ROUTE_PATH).handler(this::add);
 
         router.get(Constants.ROUTE_PATH).handler(this::getCredentials);
 
-//        router.get(Constants.PARAMETER).handler(Credential::getCredential);
+        router.route().handler(BodyHandler.create());
 
-        return router;
     }
 
     private void getCredentials(RoutingContext context)
@@ -44,7 +40,13 @@ public class Credential {
         {
             context.response().setStatusCode(Constants.OK);
 
-            context.json(Utils.getData(CREDENTIAL));
+            var response = ConfigDB.read(CREDENTIAL);
+
+            response.put(Constants.ERROR_CODE, Constants.SUCCESS_CODE);
+
+            response.put(Constants.STATUS, Constants.SUCCESS);
+
+            context.json(response);
         }
         catch (Exception exception)
         {

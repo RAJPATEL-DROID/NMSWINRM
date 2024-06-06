@@ -90,8 +90,8 @@ func ToString(data any) string {
 // Config struct to hold configuration values
 type Config struct {
 	PublisherHost string `json:"host.ip"`
-	PushPort      int    `json:"zmq.push.port"`
-	PullPort      int    `json:"zmq.pull.port"`
+	Push          int    `json:"server.push.port"`
+	Pull          int    `json:"server.pull.port"`
 }
 
 func ReadConfig(filename string) (Config, error) {
@@ -116,6 +116,7 @@ func ReadConfig(filename string) (Config, error) {
 		return config, err
 	}
 
+	logger.Info(fmt.Sprint("Config Read Successfully"))
 	return config, nil
 }
 

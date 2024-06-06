@@ -23,24 +23,22 @@ public class Provision extends AbstractVerticle {
 
     private static Router router;
 
-    public  void init(Vertx vertx)
+    public  void init(Router router)
     {
-        router = Router.router(vertx);
+        Provision.router =  router;
 
         router.route().handler(BodyHandler.create());
 
-    }
+        router.route(Constants.PROVISION_ROUTE).subRouter(Provision.router);
 
-    public Router getRouter()
-    {
         router.post(Constants.PARAMETER).handler(this::add);
 
         router.get(Constants.ROUTE_PATH).handler(this::getProvisionedDevice);
 
         router.get("/data" + Constants.PARAMETER).handler(this::getData);
 
-        return router;
     }
+
 
     private void getProvisionedDevice(RoutingContext context) {
 
@@ -49,7 +47,13 @@ public class Provision extends AbstractVerticle {
 
             context.response().setStatusCode(Constants.OK);
 
-            context.json(Utils.getData(PROVISION));
+            var response = ConfigDB.read(PROVISION);
+
+            response.put(Constants.ERROR_CODE, Constants.SUCCESS_CODE);
+
+            response.put(Constants.STATUS, Constants.SUCCESS);
+
+            context.json(response);
         }
         catch (Exception exception)
         {

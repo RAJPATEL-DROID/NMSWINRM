@@ -24,11 +24,16 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Utils
 {
+
     private static final Logger logger = LoggerFactory.getLogger(Utils.class);
 
-    public static ConcurrentMap<String,Object> config= new ConcurrentHashMap<>();
+    public static ConcurrentMap<String, Object> config = new ConcurrentHashMap<>();
 
     private static final AtomicLong counter = new AtomicLong(0);
+
+
+    // TODO : GET Method for extracting Values from Config Map
+    // TODO : Util method for Encode,Decode and getLong
 
     public static long getId()
     {
@@ -37,9 +42,10 @@ public class Utils
 
     }
 
-    public static Future<Void> readConfig()
+    public static boolean readConfig()
     {
-        Promise<Void> promise = Promise.promise();
+
+
         try
         {
             Vertx vertx = Bootstrap.getVertx();
@@ -58,42 +64,27 @@ public class Utils
                     logger.info("Config File Read Successfully...");
 
                     logger.trace(config.toString());
-
-                    promise.complete();
                 }
                 else
                 {
-                    logger.error("Error Occurred reading the config file :  ",handler.cause());
+                    logger.error("Error Occurred reading the config file :  ", handler.cause());
 
-                    promise.fail(handler.cause());
                 }
             });
         }
         catch (Exception exception)
         {
-           logger.error("error reading config file {}", exception.getMessage());
+            logger.error("error reading config file {}", exception.getMessage());
 
-           logger.error(Arrays.toString(exception.getStackTrace()));
+            logger.error(Arrays.toString(exception.getStackTrace()));
 
-           promise.fail("Exception Occurred in Reading Config File");
+            return false;
         }
-        return promise.future();
+        return true;
     }
-
-    public static JsonObject getData(RequestType type) {
-
-        var response = ConfigDB.read(type);
-
-        response.put(Constants.ERROR_CODE, Constants.SUCCESS_CODE);
-
-        response.put(Constants.STATUS, Constants.SUCCESS);
-
-        return response;
-    };
 
     public static JsonArray createContext(JsonObject targets, String requestType, Logger logger)
     {
-
 
         var contexts = new JsonArray();
         try
@@ -116,10 +107,10 @@ public class Utils
             contexts.add(context);
 
         }
-        catch(Exception exception)
+        catch (Exception exception)
         {
 
-            logger.error("Exception occurred in creating context : ",exception);
+            logger.error("Exception occurred in creating context : ", exception);
 
             logger.error(Arrays.toString(exception.getStackTrace()));
 
@@ -129,55 +120,17 @@ public class Utils
         return contexts;
     }
 
-    public static JsonObject errorHandler(String error,Integer errorCode,String errorMessage)
-    {
-        return new JsonObject()
-                        .put(Constants.ERROR,error)
-                        .put(Constants.ERROR_CODE, errorCode)
-                        .put(Constants.ERROR_MESSAGE, errorMessage)
-                        .put(Constants.STATUS,Constants.FAILED);
-    }
-
-    public static boolean checkAvailability(String ip)
+    public static JsonObject errorHandler(String error, Integer errorCode, String errorMessage)
     {
 
-        ProcessBuilder processBuilder = new ProcessBuilder("fping", "-c", "3", "-q", ip);
-
-        processBuilder.redirectErrorStream(true);
-        try
-        {
-            Process process = processBuilder.start();
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-            String line;
-
-            while ((line = reader.readLine()) != null)
-            {
-                if (line.contains("/0%"))
-                {
-                    logger.info("Device with IP address {} is up", ip);
-
-                    return true;
-                }
-                else
-                {
-                    logger.info("Device with IP address {} is down", ip);
-                }
-            }
-
-        } catch (Exception exception)
-        {
-            logger.error(exception.getMessage());
-
-            return false;
-
-        }
-        return false;
-
+        return new JsonObject().put(Constants.ERROR, error)
+                .put(Constants.ERROR_CODE, errorCode)
+                .put(Constants.ERROR_MESSAGE, errorMessage)
+                .put(Constants.STATUS, Constants.FAILED);
     }
 
-    public static void writeToFileAsync(String ip, JsonObject result) {
+    public static void writeToFileAsync(String ip, JsonObject result)
+    {
 
         Vertx vertx = Bootstrap.getVertx();
 
@@ -189,8 +142,10 @@ public class Utils
 
         String data = "{ \"" + formattedDateTime + "\" : " + result.toString() + "}\n";
 
-        vertx.fileSystem().open(fileName, new OpenOptions().setAppend(true), asyncResult -> {
-            if (asyncResult.succeeded()) {
+        vertx.fileSystem().open(fileName, new OpenOptions().setAppend(true), asyncResult ->
+        {
+            if (asyncResult.succeeded())
+            {
 
                 AsyncFile file = asyncResult.result();
 
@@ -224,5 +179,47 @@ public class Utils
             }
         });
     }
+
+//    public static boolean checkAvailability(String ip)
+//    {
+//
+//        ProcessBuilder processBuilder = new ProcessBuilder("fping", "-c", "3", "-q", ip);
+//
+//        processBuilder.redirectErrorStream(true);
+//        try
+//        {
+//            Process process = processBuilder.start();
+//
+//            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+//
+//            String line;
+//
+//            while (( line = reader.readLine() ) != null)
+//            {
+//                if (line.contains("/0%"))
+//                {
+//                    logger.info("Device with IP address {} is up", ip);
+//
+//                    return true;
+//                }
+//                else
+//                {
+//                    logger.info("Device with IP address {} is down", ip);
+//                }
+//            }
+//
+//        }
+//        catch (Exception exception)
+//        {
+//            logger.error(exception.getMessage());
+//
+//            return false;
+//
+//        }
+//        return false;
+//
+//    }
+
+
 }
 

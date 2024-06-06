@@ -94,23 +94,15 @@ public class Constants
 
     public static final String REQUEST_TYPE = "request.type";
 
-    public static final String EVENT_RUN_DISCOVERY = "event.run.discovery";
-
-    public static final String PLUGIN_APPLICATION_PATH = "/PluginEngine/bootstrap";
-
     public static final String FILE_PATH = "/home/raj/Work/NMSWINRMLITE/NMSBackend/Result/";
 
     public static final String INVALID_REQUEST_TYPE = "Invalid Request Type";
-
-    public static final String UNIQUE_SEPARATOR  = "~@@~";
-
-    public static final String PUBLISHER_PORT = "zmq.publisher.port";
 
     public static final String PUSH_PORT = "zmq.push.port";
 
     public static final String ZMQ_ADDRESS  = "tcp://*:";
 
-    public static final String RECEIVER_PORT = "receiver.zmq.port";
+    public static final String RECEIVER_PORT = "zmq.pull.port";
 
     public static final String NUM_OF_ROWS = "num.of.rows";
 

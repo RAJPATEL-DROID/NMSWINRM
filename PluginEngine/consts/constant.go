@@ -7,8 +7,6 @@ const (
 
 	IP = "ip"
 
-	UniqueSeparator = "~@@~"
-
 	UNAME = "username"
 
 	PASSWORD = "password"
@@ -41,14 +39,6 @@ const (
 
 	FAILED = "failed"
 
-	ContextMissingError = "No Context Found"
-
-	ContextMissingCode = "ERR001"
-
-	JsonErrorCode = "ERR002"
-
-	DecodeErrorCode = "ERR003"
-
 	InvalidRequestTypeErrorCode = "ERR004"
 
 	ConnectionError = "CONNECTION01"
@@ -58,4 +48,10 @@ const (
 	RESULT = "result"
 
 	HostName = "system.host.name"
+)
+
+var (
+	Sender = make(chan string)
+
+	Receiver = make(chan string)
 )

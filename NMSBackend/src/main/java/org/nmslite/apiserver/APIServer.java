@@ -25,7 +25,8 @@ public class APIServer extends AbstractVerticle {
     private static final Logger logger = LoggerFactory.getLogger(APIServer.class);
 
     @Override
-    public void start(Promise<Void> startPromise) {
+    public void start(Promise<Void> startPromise)
+    {
         try {
 
             var port = Integer.parseInt(Utils.config.get(Constants.HTTP_PORT).toString());
@@ -43,30 +44,27 @@ public class APIServer extends AbstractVerticle {
             Router router = Router.router(vertx);
 
             Credential credential = new Credential();
-            credential.init(vertx);
+            credential.init(router);
 
             Discovery discovery = new Discovery();
-            discovery.init(vertx);
+            discovery.init(router);
 
             Provision provision = new Provision();
-            provision.init(vertx);
+            provision.init(router);
 
-            router.route(Constants.CREDENTIAL_ROUTE).subRouter(credential.getRouter());
+            server.requestHandler(router).listen().onComplete(res ->
+            {
 
-            router.route(Constants.DISCOVERY_ROUTE).subRouter(discovery.getRouter());
-
-            router.route(Constants.PROVISION_ROUTE).subRouter(provision.getRouter());
-
-//            router.route("/data/:id").handler(this::getData);
-
-            server.requestHandler(router).listen().onComplete(res -> {
-
-                if (res.succeeded()) {
+                if (res.succeeded())
+                {
 
                     logger.info("Server is now listening");
 
                     startPromise.complete();
-                } else {
+
+                }
+                else
+                {
 
                     logger.error("Failed to bind!");
 
@@ -76,10 +74,13 @@ public class APIServer extends AbstractVerticle {
 
             logger.info("SubRouters of credential,discovery and provision api have been deployed");
 
-        } catch (Exception exception) {
+        }
+        catch (Exception exception)
+        {
             logger.error("Exception occurred during starting APIServer", exception);
 
             startPromise.fail(startPromise.future().cause());
+
         }
     }
 
