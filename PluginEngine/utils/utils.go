@@ -90,8 +90,8 @@ func ToString(data any) string {
 // Config struct to hold configuration values
 type Config struct {
 	PublisherHost string `json:"host.ip"`
-	Push          int    `json:"server.push.port"`
-	Pull          int    `json:"server.pull.port"`
+	Push          int    `json:"zmq.push.port"`
+	Pull          int    `json:"zmq.pull.port"`
 }
 
 func ReadConfig(filename string) (Config, error) {
@@ -108,6 +108,7 @@ func ReadConfig(filename string) (Config, error) {
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
+
 	err = decoder.Decode(&config)
 	if err != nil {
 

@@ -22,26 +22,28 @@ public class Discovery
 
     public static final Logger logger = LoggerFactory.getLogger(Discovery.class);
 
-    private static Router router;
+    private final Router router;
+
+    public Discovery()
+    {
+        this.router = Router.router(Bootstrap.getVertx());
+    }
+
 
     public void init(Router router)
     {
 
-        Discovery.router = router;
+        router.route(Constants.DISCOVERY_ROUTE).subRouter(this.router);
 
-        router.route().handler(BodyHandler.create());
+        this.router.route().handler(BodyHandler.create());
 
-        router.route(Constants.DISCOVERY_ROUTE).subRouter(Discovery.router);
+        this.router.post(Constants.ROUTE_PATH).handler(this::add);
 
-        router.post(Constants.ROUTE_PATH).handler(this::add);
+        this.router.get(Constants.ROUTE_PATH).handler(this::getDiscoveries);
 
-        router.get(Constants.ROUTE_PATH).handler(this::getDiscoveries);
+        this.router.post(Constants.RUN).handler(this::discoveryRunRequest);
 
-//        router.get(Constants.PARAMETER).handler(Discovery::getDiscovery);
-
-        router.post(Constants.RUN).handler(this::discoveryRunRequest);
-//
-        router.get(Constants.RUN_API_RESULT).handler(this::discoveryRunResult);
+        this.router.get(Constants.RUN_API_RESULT).handler(this::discoveryRunResult);
 
     }
 

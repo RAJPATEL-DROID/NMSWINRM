@@ -1,5 +1,7 @@
 package org.nmslite.engine;
 
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import org.nmslite.Bootstrap;
@@ -13,12 +15,12 @@ import java.util.Base64;
 import static org.nmslite.utils.RequestType.POLLING;
 import static org.nmslite.utils.RequestType.PROVISION;
 
-public class Scheduler {
-
-
+public class Scheduler extends AbstractVerticle
+{
     private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
 
-    public void schedule() {
+    @Override
+    public void start(Promise<Void> startPromise) {
 
         Vertx vertx = Bootstrap.getVertx();
 
@@ -26,48 +28,45 @@ public class Scheduler {
 
         logger.trace("Default Poll time set to {} ", pollTime);
 
-        new Thread(() ->
+        vertx.setPeriodic(pollTime, timer ->
         {
-            while(true)
+            try
             {
-                try
+                var result = ConfigDB.read(PROVISION);
 
+                // We Get Array of Discovery ID of Provisioned Device
+                if (!result.getJsonArray(Constants.PROVISION_DEVICES).isEmpty())
                 {
-                    var result = ConfigDB.read(PROVISION);
+                    var pollingArray = new JsonArray();
 
-                    // We Get Array of Discovery ID of Provisioned Device
-                    if (!result.getJsonArray(Constants.PROVISION_DEVICES).isEmpty())
+                    //  Get Discovery and Credential Details of Each Device ( Create Context ) :
+                    for (var id : result.getJsonArray(Constants.PROVISION_DEVICES))
                     {
-                        var pollingArray = new JsonArray();
+                        var res = ConfigDB.read(POLLING, Long.parseLong(id.toString()));
 
-                        //  Get Discovery and Credential Details of Each Device ( Create Context ) :
-                        for (var id : result.getJsonArray(Constants.PROVISION_DEVICES))
-                        {
-                            var res = ConfigDB.read(POLLING, Long.parseLong(id.toString()));
-
-                            pollingArray.add(res.getJsonObject(Constants.CONTEXT));
-
-                        }
-
-                        logger.info("Sending context Array : {}", pollingArray);
-
-                        var context = Base64.getEncoder().encodeToString(pollingArray.toString().getBytes(zmq.ZMQ.CHARSET));
-
-                        vertx.eventBus().send(Constants.ZMQ_PUSH,context);
+                        pollingArray.add(res.getJsonObject(Constants.CONTEXT));
 
                     }
 
-                    // TODO : Find a way to stop for some time.
-                }
-                catch(Exception exception)
-                {
-                    logger.error(exception.toString());
+                    logger.info("Sending context Array : {}", pollingArray);
 
-                    logger.error(exception.getMessage());
+                    var context = Base64.getEncoder().encodeToString(pollingArray.toString().getBytes(zmq.ZMQ.CHARSET));
+
+                    vertx.eventBus().send(Constants.ZMQ_PUSH,context);
+
                 }
             }
-        }).start();
+            catch(Exception exception)
+            {
+                logger.error(exception.toString());
 
+                logger.error(exception.getMessage());
+            }
+        });
+
+        logger.info("Scheduler Class Deployed successfully...");
+
+        startPromise.complete();
     }
 
 }

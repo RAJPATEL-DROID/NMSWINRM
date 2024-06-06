@@ -37,14 +37,17 @@ public class ZMQRouter extends AbstractVerticle
             // Bind the REQ socket to Local Address
             poller.bind(Constants.ZMQ_ADDRESS + Utils.config.get(Constants.RECEIVER_PORT));
 
-            vertx.eventBus().localConsumer(Constants.ZMQ_PUSH, handler ->
-            {
-                logger.trace("Sending Message to PluginEngine : {}", handler.body().toString());
 
-                reqSocket.send(handler.body().toString().getBytes(ZMQ.CHARSET), ZMQ.DONTWAIT);
+            // Send the Request Context to PluginEngine via ZMQ
+            vertx.eventBus().<String>localConsumer(Constants.ZMQ_PUSH, handler ->
+            {
+                logger.trace("Sending Message to PluginEngine : {}", handler.body());
+
+                reqSocket.send(handler.body().getBytes(ZMQ.CHARSET), ZMQ.DONTWAIT);
 
             });
 
+            // Continuously Look For Data on ZMQ Port and Send it to Appropriate Local Consumer in ResponseProcessor Verticle
             new Thread(()->
             {
                 while (true)

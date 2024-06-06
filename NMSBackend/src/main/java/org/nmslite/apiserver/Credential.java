@@ -5,6 +5,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.nmslite.Bootstrap;
 import org.nmslite.db.ConfigDB;
 import org.nmslite.utils.Constants;
 import org.nmslite.utils.Utils;
@@ -17,20 +18,23 @@ public class Credential {
 
     private static final Logger logger = LoggerFactory.getLogger(Credential.class);
 
-    private static Router router;
+    private final Router router;
+
+    public Credential()
+    {
+        this.router = Router.router(Bootstrap.getVertx());
+    }
 
     public  void init(Router router)
     {
 
-        Credential.router = router;
+        router.route(Constants.CREDENTIAL_ROUTE).subRouter(this.router);
 
-        router.route(Constants.CREDENTIAL_ROUTE).subRouter(Credential.router);
+        this.router.route().handler(BodyHandler.create());
 
-        router.post(Constants.ROUTE_PATH).handler(this::add);
+        this.router.post(Constants.ROUTE_PATH).handler(this::add);
 
-        router.get(Constants.ROUTE_PATH).handler(this::getCredentials);
-
-        router.route().handler(BodyHandler.create());
+        this.router.get(Constants.ROUTE_PATH).handler(this::getCredentials);
 
     }
 

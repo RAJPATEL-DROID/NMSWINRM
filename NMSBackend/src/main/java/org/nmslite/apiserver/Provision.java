@@ -7,6 +7,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.nmslite.Bootstrap;
 import org.nmslite.db.ConfigDB;
 import org.nmslite.utils.Constants;
 import org.nmslite.utils.FileReader;
@@ -21,21 +22,25 @@ public class Provision extends AbstractVerticle {
 
     public static final Logger logger = LoggerFactory.getLogger(Provision.class);
 
-    private static Router router;
+    private final Router router;
+
+    public Provision()
+    {
+        this.router = Router.router(Bootstrap.getVertx());
+    }
+
 
     public  void init(Router router)
     {
-        Provision.router =  router;
+        router.route(Constants.PROVISION_ROUTE).subRouter(this.router);
 
-        router.route().handler(BodyHandler.create());
+        this.router.route().handler(BodyHandler.create());
 
-        router.route(Constants.PROVISION_ROUTE).subRouter(Provision.router);
+        this.router.post(Constants.PARAMETER).handler(this::add);
 
-        router.post(Constants.PARAMETER).handler(this::add);
+        this.router.get(Constants.ROUTE_PATH).handler(this::getProvisionedDevice);
 
-        router.get(Constants.ROUTE_PATH).handler(this::getProvisionedDevice);
-
-        router.get("/data" + Constants.PARAMETER).handler(this::getData);
+        this.router.get("/data" + Constants.PARAMETER).handler(this::getData);
 
     }
 

@@ -12,6 +12,7 @@ import (
 )
 
 func Discover(context map[string]interface{}) {
+
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println("error in discovery: ", err)
@@ -24,7 +25,6 @@ func Discover(context map[string]interface{}) {
 
 			consts.Sender <- encodedResult
 
-			//zmqsend <- context
 		}
 	}()
 
@@ -216,7 +216,6 @@ func Collect(context map[string]interface{}) {
 
 			consts.Sender <- encodedResult
 
-			//zmqsend <- context
 		}
 
 		close(resultChannel)
@@ -352,7 +351,6 @@ func Collect(context map[string]interface{}) {
 	consts.Sender <- encodedResult
 
 	logger.Info(fmt.Sprintf("Result Sent TO ZMQ Sender"))
-	//zmqsend <- context
 
 	return
 }

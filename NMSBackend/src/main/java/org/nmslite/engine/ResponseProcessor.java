@@ -29,13 +29,14 @@ public class ResponseProcessor extends AbstractVerticle
         startPromise.complete();
     }
 
+    // Receive Data of Discovery Run from ZMQRouter
     private void discovery()
     {
         try
         {
-            vertx.eventBus().localConsumer(Constants.DISCOVERY, handler ->
+            vertx.eventBus().<JsonObject>localConsumer(Constants.DISCOVERY, handler ->
             {
-                var received = new JsonObject(handler.body().toString());
+                var received = handler.body();
 
                 logger.info("Data Received from Device : {}", received);
 
@@ -96,13 +97,14 @@ public class ResponseProcessor extends AbstractVerticle
 
     }
 
+    // Receive Poll Data from the ZMQRouter
     private void polling()
     {
         try
         {
-            vertx.eventBus().localConsumer(Constants.POLLING, handler ->
+            vertx.eventBus().<JsonObject>localConsumer(Constants.POLLING, handler ->
             {
-                var received = new JsonObject(handler.body().toString());
+                var received = handler.body();
 
                 String ip = received.getString(Constants.IP);
 

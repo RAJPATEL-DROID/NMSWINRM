@@ -13,8 +13,6 @@ import org.nmslite.db.ConfigDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -44,33 +42,20 @@ public class Utils
 
     public static boolean readConfig()
     {
-
-
         try
         {
             Vertx vertx = Bootstrap.getVertx();
 
-            vertx.fileSystem().readFile(Constants.CONFIG_PATH, handler ->
+            var data = vertx.fileSystem().readFileBlocking(Constants.CONFIG_PATH).toJsonObject();
+
+            for (var key : data.fieldNames())
             {
-                if (handler.succeeded())
-                {
-                    var data = handler.result().toJsonObject();
+                config.put(key, data.getValue(key));
+            }
 
-                    for (var key : data.fieldNames())
-                    {
-                        config.put(key, data.getValue(key));
-                    }
+            logger.info("Config File Read Successfully...");
 
-                    logger.info("Config File Read Successfully...");
-
-                    logger.trace(config.toString());
-                }
-                else
-                {
-                    logger.error("Error Occurred reading the config file :  ", handler.cause());
-
-                }
-            });
+            logger.trace(config.toString());
         }
         catch (Exception exception)
         {
