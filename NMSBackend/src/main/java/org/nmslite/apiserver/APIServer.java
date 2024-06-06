@@ -2,23 +2,13 @@ package org.nmslite.apiserver;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
-import org.nmslite.Bootstrap;
-import org.nmslite.db.ConfigDB;
 import org.nmslite.utils.Constants;
-import org.nmslite.utils.FileReader;
 import org.nmslite.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.nmslite.utils.RequestType.DISCOVERY_RUN;
-import static org.nmslite.utils.RequestType.POLLING_RESULT;
 
 public class APIServer extends AbstractVerticle {
 
@@ -29,9 +19,9 @@ public class APIServer extends AbstractVerticle {
     {
         try {
 
-            var port = Integer.parseInt(Utils.config.get(Constants.HTTP_PORT).toString());
+            var port = Utils.getInteger(Utils.get(Constants.HTTP_PORT).toString());
 
-            var hostname = Utils.config.get(Constants.HOST).toString();
+            var hostname = Utils.get(Constants.HOST).toString();
 
             logger.info("Starting server on port {}", port);
 

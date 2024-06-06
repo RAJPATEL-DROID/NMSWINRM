@@ -37,9 +37,9 @@ public class Discovery
 
         this.router.route().handler(BodyHandler.create());
 
-        this.router.post(Constants.ROUTE_PATH).handler(this::add);
-
         this.router.get(Constants.ROUTE_PATH).handler(this::getDiscoveries);
+
+        this.router.post(Constants.ROUTE_PATH).handler(this::add);
 
         this.router.post(Constants.RUN).handler(this::discoveryRunRequest);
 
@@ -84,7 +84,6 @@ public class Discovery
 
         try
         {
-
             if (!data.isEmpty())
             {
                 var request = new JsonObject(data.toString());
@@ -111,7 +110,6 @@ public class Discovery
                             response = Utils.errorHandler("Discovery Profile Not Created", Constants.BAD_REQUEST, "Provide Correct Discovery Name and Credential Ids");
 
                             context.response().setStatusCode(Constants.BAD_REQUEST);
-
                         }
                         else
                         {
@@ -153,6 +151,7 @@ public class Discovery
             }
             else
             {
+
                 var response = Utils.errorHandler("Invalid JSON Format", Constants.BAD_REQUEST, "Provide Valid JSON Format");
 
                 context.response().setStatusCode(Constants.BAD_REQUEST);
@@ -204,7 +203,7 @@ public class Discovery
                     {
                         var message = contextData.toString();
 
-                        var encodedContext = Base64.getEncoder().encodeToString(message.getBytes());
+                        var encodedContext = Utils.encode(message);
 
                         Bootstrap.getVertx().eventBus().send(Constants.ZMQ_PUSH, encodedContext);
 
@@ -313,7 +312,7 @@ public class Discovery
         {
             logger.error("Error :", exception);
 
-            logger.error(Arrays.toString(exception.getStackTrace()));
+            logger.error(exception.getMessage());
 
             context.response().setStatusCode(500);
 

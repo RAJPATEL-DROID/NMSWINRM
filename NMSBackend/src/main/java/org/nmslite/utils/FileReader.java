@@ -13,21 +13,24 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FileReader {
+public class FileReader
+{
+
     public static final Logger logger = LoggerFactory.getLogger(FileReader.class);
 
     private static final String FILE_PATH_PREFIX = Constants.FILE_PATH;
 
-    public JsonArray readLastNLinesByIP(String ipAddress, int numLines) {
+    public JsonArray readLastNLinesByIP(String ipAddress, int numLines)
+    {
 
-        String filePath = FILE_PATH_PREFIX + ipAddress + ".txt";
+        var filePath = FILE_PATH_PREFIX + ipAddress + ".txt";
 
-        JsonArray jsonArray = new JsonArray();
+        var jsonArray = new JsonArray();
         try
         {
-            List<String> lastNLines = readLastNLines(filePath, numLines);
+            var lastNLines = readLastNLines(filePath, numLines);
 
-            for (String line : lastNLines)
+            for (var line : lastNLines)
             {
                 jsonArray.add(new JsonObject(line));
             }
@@ -41,19 +44,18 @@ public class FileReader {
         return jsonArray;
     }
 
-    private static List<String> readLastNLines(String filePath, int numLines) throws IOException {
+    private static List<String> readLastNLines(String filePath, int numLines) throws IOException
+    {
 
         List<String> lastNLines = new ArrayList<>();
 
-        Path path = Paths.get(filePath);
+        var path = Paths.get(filePath);
 
-        long count = 0;
-
-        try (Stream<String> file = Files.lines(path))
+        try (var file = Files.lines(path))
         {
-            count = file.count();
+            long count = file.count();
 
-            try (Stream<String> lines = Files.lines(path))
+            try (var lines = Files.lines(path))
             {
                 if (count <= numLines)
                 {
@@ -62,20 +64,24 @@ public class FileReader {
                 }
                 else
                 {
-                    lastNLines = lines.skip(count - numLines)
-                            .collect(Collectors.toList());
+                    lastNLines = lines.skip(count - numLines).collect(Collectors.toList());
                 }
             }
             catch (IOException exception)
             {
                 logger.error("Error reading last n lines", exception);
+
+                return null;
             }
         }
         catch (IOException exception)
         {
             logger.error("Error in File Reading : ", exception);
+
+            return null;
         }
 
         return lastNLines;
     }
+
 }

@@ -125,7 +125,7 @@
     </logger>
 
 
-    <logger name="org.nmslite.engine.ResponseProcessor" level="trace" additivity="false">
+    <logger name="org.nmslite.engine.Receiver" level="trace" additivity="false">
         <appender-ref ref="ResponseProcessor"/>
     </logger>
 

@@ -2,7 +2,6 @@ package org.nmslite.engine;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import org.nmslite.Bootstrap;
 import org.nmslite.db.ConfigDB;
@@ -10,21 +9,22 @@ import org.nmslite.utils.Constants;
 import org.nmslite.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Base64;
 
 import static org.nmslite.utils.RequestType.POLLING;
 import static org.nmslite.utils.RequestType.PROVISION;
 
 public class Scheduler extends AbstractVerticle
 {
+
     private static final Logger logger = LoggerFactory.getLogger(Scheduler.class);
 
     @Override
-    public void start(Promise<Void> startPromise) {
+    public void start(Promise<Void> startPromise)
+    {
 
-        Vertx vertx = Bootstrap.getVertx();
+        var vertx = Bootstrap.getVertx();
 
-        long pollTime = Long.parseLong(Utils.config.get(Constants.POLL_TIME).toString()) * 1000;
+        var pollTime = Utils.getLong(Utils.get(Constants.POLL_TIME).toString()) * 1000;
 
         logger.trace("Default Poll time set to {} ", pollTime);
 
@@ -42,7 +42,7 @@ public class Scheduler extends AbstractVerticle
                     //  Get Discovery and Credential Details of Each Device ( Create Context ) :
                     for (var id : result.getJsonArray(Constants.PROVISION_DEVICES))
                     {
-                        var res = ConfigDB.read(POLLING, Long.parseLong(id.toString()));
+                        var res = ConfigDB.read(POLLING, Utils.getLong(id.toString()));
 
                         pollingArray.add(res.getJsonObject(Constants.CONTEXT));
 
@@ -50,13 +50,13 @@ public class Scheduler extends AbstractVerticle
 
                     logger.info("Sending context Array : {}", pollingArray);
 
-                    var context = Base64.getEncoder().encodeToString(pollingArray.toString().getBytes(zmq.ZMQ.CHARSET));
+                    var context = Utils.encode(pollingArray.toString());
 
-                    vertx.eventBus().send(Constants.ZMQ_PUSH,context);
+                    vertx.eventBus().send(Constants.ZMQ_PUSH, context);
 
                 }
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
                 logger.error(exception.toString());
 

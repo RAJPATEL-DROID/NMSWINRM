@@ -32,9 +32,9 @@ public class Credential {
 
         this.router.route().handler(BodyHandler.create());
 
-        this.router.post(Constants.ROUTE_PATH).handler(this::add);
-
         this.router.get(Constants.ROUTE_PATH).handler(this::getCredentials);
+
+        this.router.post(Constants.ROUTE_PATH).handler(this::add);
 
     }
 

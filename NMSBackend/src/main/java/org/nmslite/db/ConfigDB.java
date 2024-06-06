@@ -10,16 +10,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
+public class ConfigDB
+{
 
-public class ConfigDB {
-    private ConfigDB() {
-    }
+    private ConfigDB()
+    { }
 
+    private static final AtomicLong counter = new AtomicLong(0);
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigDB.class);
 
-    public static final ConcurrentHashMap<Long, JsonObject> credentialsProfiles = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, JsonObject> credentialsProfiles = new ConcurrentHashMap<>();
 
     public static final ConcurrentHashMap<Long, JsonObject> discoveryProfiles = new ConcurrentHashMap<>();
 
@@ -27,36 +30,44 @@ public class ConfigDB {
 
     private static final ConcurrentHashSet<Long> provisionedDevices = new ConcurrentHashSet<>();
 
-    public static JsonObject create(RequestType type, JsonObject request) {
+    public static long getId()
+    {
+
+        return counter.incrementAndGet();
+
+    }
+
+    public static JsonObject create(RequestType type, JsonObject request)
+    {
 
         var reply = new JsonObject();
 
-        logger.trace("Create Request for : {}", type );
+        logger.trace("Create Request for : {}", type);
 
-        try {
+        try
+        {
             switch (type)
             {
 
                 case CREDENTIAL ->
                 {
+                    boolean credentialExist = credentialsProfiles.values().stream()
+                                            .anyMatch(credential -> credential.getString(Constants.NAME).equals(request.getString(Constants.NAME)));
 
-                    // check if credential with same name exists
-                    for (var credential : credentialsProfiles.values())
+                    if(credentialExist)
                     {
-                        if (credential.getString(Constants.NAME).equals(request.getString(Constants.NAME)))
-                        {
-                            reply.put(Constants.STATUS, Constants.FAILED);
-
-                            return reply;
-                        }
+                        reply.put(Constants.STATUS, Constants.FAILED);
                     }
+                    else
+                    {
 
-                    // If execution is here means credentials are new
-                    var id = Utils.getId();
+                        // If execution is here means credentials are new
+                        var id = getId();
 
-                    credentialsProfiles.put(id, request);
+                        credentialsProfiles.put(id, request);
 
-                    reply.put(Constants.CREDENTIAL_ID, id);
+                        reply.put(Constants.CREDENTIAL_ID, id);
+                    }
 
                 }
                 case DISCOVERY ->
@@ -64,68 +75,63 @@ public class ConfigDB {
 
                     var credentialArray = request.getJsonArray(Constants.CREDENTIAL_IDS);
 
-                    for (Object credentialId : credentialArray)
+                    var allCredentialsExist = credentialArray.stream().map(Object::toString)
+                            .map(Utils::getLong)
+                            .allMatch(credentialsProfiles::containsKey);
+
+                    if(!allCredentialsExist)
                     {
-                        if (!credentialsProfiles.containsKey(Long.parseLong(credentialId.toString())))
+                        reply.put(Constants.STATUS, Constants.FAILED);
+                    }
+                    else
+                    {
+                        var discoveryProfileExists = discoveryProfiles.values().stream()
+                                .anyMatch(discoveryProfile -> discoveryProfile.getString(Constants.NAME).equals(request.getString(Constants.NAME)));
+
+                        if(discoveryProfileExists)
                         {
                             reply.put(Constants.STATUS, Constants.FAILED);
-
-                            return reply;
                         }
-                    }
-
-                    for (var discovery : discoveryProfiles.values())
-                    {
-                        if (discovery.getString(Constants.NAME).equals(request.getString(Constants.NAME)))
+                        else
                         {
+                            var id = getId();
 
-                            reply.put(Constants.STATUS,Constants.FAILED);
+                            discoveryProfiles.put(id, request);
 
-                            return reply;
+                            reply.put(Constants.DISCOVERY_ID, id);
                         }
-
                     }
-
-                    var id = Utils.getId();
-
-                    discoveryProfiles.put(id, request);
-
-                    reply.put(Constants.DISCOVERY_ID, id);
-
-
                 }
                 case VALID_DISCOVERY ->
                 {
 
                     logger.trace(request.toString());
 
-                    var discoveryID = request.getLong(Constants.DISCOVERY_ID);
-
-                    logger.trace("Discovery Id done");
-
                     var ip = request.getString(Constants.IP);
 
                     request.remove(Constants.IP);
 
-
                     if (!validDevices.containsKey(ip))
                     {
-                        validDevices.put(ip,request);
+                        validDevices.put(ip, request);
 
-                        logger.info(validDevices.toString());
+                        logger.info("Device added in list of valid devices {}",ip);
+
+                        logger.info("Valid Devices : {} ",validDevices.keySet().toString());
 
                     }
                     else
                     {
                         logger.info("Device with Same IP Address already exists");
 
-                        reply.put(Constants.ERROR,"Device with Same IP Address already exists");
+                        reply.put(Constants.ERROR, "Device with Same IP Address already exists");
 
                         return reply;
 
                     }
 
-                    logger.info("For Device IP {} , credential id {} is valid", ip, validDevices.get(ip).getString(Constants.CREDENTIAL_ID));
+                    logger.info("For Device IP {} , credential id {} is valid", ip, validDevices.get(ip)
+                            .getString(Constants.CREDENTIAL_ID));
 
                     reply.put(Constants.MESSAGE, "Device Discovered Successfully");
 
@@ -136,38 +142,35 @@ public class ConfigDB {
                     var id = request.getLong(Constants.ID);
 
                     // check if the discovery id is present in any valid devices
-                    if(discoveryProfiles.containsKey(id))
+                    if (discoveryProfiles.containsKey(id))
                     {
-                        for(var device : validDevices.values())
+
+                        boolean deviceDiscovered = validDevices.values().stream()
+                                .anyMatch(device -> device.getLong(Constants.DISCOVERY_ID).equals(id));
+
+                        if(deviceDiscovered)
                         {
-                            if(device.getLong(Constants.DISCOVERY_ID).equals(id))
+                            if(!provisionedDevices.contains(id))
                             {
-                                if(!provisionedDevices.contains(id))
-                                {
-                                    provisionedDevices.add(id);
+                                provisionedDevices.add(id);
 
-                                    logger.trace("Device provisioned successfully for {}", id);
+                                logger.info("Device Provisioned Successfully for {}", id);
+                            }
+                            else
+                            {
+                                reply.put(Constants.ERROR, "Device already provisioned");
 
-                                }
-                                else
-                                {
-                                    reply.put(Constants.STATUS,Constants.FAILED);
-
-                                    reply.put(Constants.ERROR,"Device already provisioned");
-
-                                    logger.trace("Device already provisioned successfully for {}", id);
-
-                                }
-                                return reply;
+                                logger.trace("Device already provisioned successfully for {}", id);
                             }
                         }
-                        reply.put(Constants.STATUS, Constants.FAILED);
+                        else
+                        {
+                            reply.put(Constants.ERROR,"Device is not discovered yet!!");
+                        }
                     }
                     else
                     {
                         reply.put(Constants.ERROR, "Invalid Discovery Id");
-
-                        reply.put(Constants.STATUS, Constants.FAILED);
                     }
                 }
                 default ->
@@ -184,11 +187,11 @@ public class ConfigDB {
         catch (Exception exception)
         {
 
-            logger.error("Error while inserting discovery ", exception);
+            logger.error("Exception Occurred in Create Method", exception);
 
             reply.put(Constants.ERROR, exception.toString())
 
-                    .put(Constants.ERROR_CODE, 400)
+                    .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
 
                     .put(Constants.ERROR_MESSAGE, exception.getMessage());
         }
@@ -204,188 +207,195 @@ public class ConfigDB {
 
         logger.info("Read  Request for type {}", request);
 
-        switch (request)
+        try
         {
-            case CREDENTIAL ->
+            switch (request)
             {
-                JsonArray credentialObjects = new JsonArray();
-
-                for (var id : credentialsProfiles.keySet())
+                case CREDENTIAL ->
                 {
+                    var credentialObjects = credentialsProfiles.entrySet().stream()
+                            .map(entry -> entry.getValue().copy().put("id", entry.getKey().toString()))
+                            .collect(  JsonArray::new, JsonArray::add, JsonArray::addAll);
 
-                    credentialObjects.add(new JsonObject().put(id.toString(), credentialsProfiles.get(id)));
+                    reply.put(Constants.CREDENTIAL_IDS, credentialObjects);
 
                 }
-
-                reply.put(Constants.CREDENTIAL_IDS, credentialObjects);
-            }
-            case DISCOVERY ->
-            {
-                JsonArray discoveryObjects = new JsonArray();
-
-                for (var id : discoveryProfiles.keySet())
+                case DISCOVERY ->
                 {
-                    discoveryObjects.add(new JsonObject().put(id.toString(), discoveryProfiles.get(id)));
+                    var discoveryObjects = discoveryProfiles.entrySet().stream()
+                            .map(entry -> entry.getValue().copy().put("id", entry.getKey().toString()))
+                            .collect(  JsonArray::new, JsonArray::add, JsonArray::addAll);
+
+                    reply.put(Constants.DISCOVERY_IDS, discoveryObjects);
 
                 }
-                reply.put(Constants.DISCOVERY_IDS, discoveryObjects);
-            }
-            case PROVISION ->
-            {
-
-                JsonArray provisionedMonitors = new JsonArray();
-
-                for (var id : provisionedDevices)
+                case PROVISION ->
                 {
-                    provisionedMonitors.add(id);
+
+                    var provisionedMonitors = provisionedDevices.stream().collect(JsonArray::new, JsonArray::add, JsonArray::addAll);
+
+                    reply.put(Constants.PROVISION_DEVICES, provisionedMonitors);
+
                 }
+                default ->
+                {
 
-                reply.put(Constants.PROVISION_DEVICES, provisionedMonitors);
+                    logger.error("Invalid Read Request Type in Database");
 
+                    reply.put(Constants.ERROR, Constants.INVALID_REQUEST_TYPE)
 
-            }
-            default ->
-            {
-
-                logger.error("Invalid Read Request Type in Database");
-
-                reply.put(Constants.ERROR, Constants.INVALID_REQUEST_TYPE)
-
-                        .put(Constants.ERROR_CODE, Constants.BAD_REQUEST);
+                            .put(Constants.ERROR_CODE, Constants.BAD_REQUEST);
+                }
             }
         }
+        catch (Exception exception)
+        {
+
+            logger.error("Exception Occurred in Read Method", exception);
+
+            reply.put(Constants.ERROR, exception.toString())
+
+                    .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
+
+                    .put(Constants.ERROR_MESSAGE, exception.getMessage());
+        }
+
         return reply;
     }
 
-    public static JsonObject read( RequestType type,Long id)
+    public static JsonObject read(RequestType type, Long id)
     {
 
         var reply = new JsonObject();
 
         logger.trace("Read  Request for type {} of id {}", type, id);
 
-        switch (type) {
-            case DISCOVERY_RUN ->
+        try
+        {
+            switch (type)
             {
-
-                if (discoveryProfiles.containsKey(id))
+                case DISCOVERY_RUN ->
                 {
-
-                    var contextData = new JsonObject();
-
-                    var discovery = discoveryProfiles.get(id);
-
-                    var credentials = new JsonArray();
-
-                    for (var credentialId : discovery.getJsonArray(Constants.CREDENTIAL_IDS))
+                    if (discoveryProfiles.containsKey(id))
                     {
 
-                        var credDetails = credentialsProfiles.get(Long.parseLong(credentialId.toString()));
+                        var contextData = new JsonObject();
 
-                        credDetails.put(Constants.CREDENTIAL_ID, credentialId);
+                        var discovery = discoveryProfiles.get(id);
 
-                        credentials.add(credDetails);
+                        var credentials = discovery.getJsonArray(Constants.CREDENTIAL_IDS).stream()
+                                .map(credentialId -> {
+                                    var credDetails = credentialsProfiles.get(Utils.getLong(credentialId.toString()));
+                                    return credDetails.put(Constants.CREDENTIAL_ID, credentialId);
+                                })
+                                .collect(JsonArray::new, JsonArray::add, JsonArray::addAll);
 
+                        contextData.put(Constants.DISCOVERY_DATA, discovery)
+
+                                .put(Constants.CREDENTIAL_PROFILES, credentials)
+
+                                .put(Constants.ID, id);
+
+                        reply.put(Constants.CONTEXT, contextData);
                     }
-
-                    contextData.put(Constants.DISCOVERY_DATA, discovery).put(Constants.CREDENTIAL_PROFILES, credentials);
-
-                    contextData.put(Constants.ID, id);
-
-                    reply.put(Constants.CONTEXT, contextData);
-
-                }
-                else
-                {
-                    reply.put(Constants.STATUS, Constants.FAILED);
-
-                    logger.error("Invalid Discovery Id {}", reply);
-                }
-
-            }
-            case DISCOVERY_RUN_RESULT ->
-            {
-
-                if(discoveryProfiles.containsKey(id))
-                {
-                    for(var device : validDevices.values())
+                    else
                     {
-                        if(device.getLong(Constants.DISCOVERY_ID).equals(id))
+                        reply.put(Constants.STATUS, Constants.FAILED);
+
+                        logger.error("Invalid Discovery Id {}", reply);
+                    }
+                }
+                case DISCOVERY_RUN_RESULT ->
+                {
+
+                    if (discoveryProfiles.containsKey(id))
+                    {
+                        var deviceDiscovered  = validDevices.values().stream()
+                                .anyMatch(deviceId -> deviceId.getLong(Constants.DISCOVERY_ID).equals(id));
+
+                        if(deviceDiscovered)
                         {
                             logger.info("got the match of discovery id");
 
                             reply.put(Constants.STATUS, Constants.SUCCESS);
 
-                            return reply;
+                        }
+                        else
+                        {
+                            reply.put(Constants.STATUS, Constants.FAILED);
                         }
                     }
-                    reply.put(Constants.STATUS, Constants.FAILED);
-                }
-                else
-                {
-                    reply.put(Constants.ERROR, "Invalid Discovery Id");
-
-                    reply.put(Constants.STATUS, Constants.FAILED);
-                }
-
-                return reply;
-            }
-            case POLLING ->
-            {
-                var details = new JsonObject();
-
-                details.put(Constants.IP, discoveryProfiles.get(id).getString(Constants.IP))
-                        .put(Constants.DEVICE_PORT, discoveryProfiles.get(id).getString(Constants.DEVICE_PORT));
-
-
-                for(var device : validDevices.values())
-                {
-                    if(device.getLong(Constants.DISCOVERY_ID).equals(id))
+                    else
                     {
-                        var credentialDetails = credentialsProfiles.get(device.getLong(Constants.CREDENTIAL_ID));
+                        reply.put(Constants.ERROR, "Invalid Discovery Id");
 
-                        details.put(Constants.USERNAME, credentialDetails.getString(Constants.USERNAME))
-                                .put(Constants.PASSWORD, credentialDetails.getString(Constants.PASSWORD));
+                        reply.put(Constants.STATUS, Constants.FAILED);
+                    }
+                }
+                case POLLING ->
+                {
+                    var details = new JsonObject();
+
+                    details.put(Constants.IP, discoveryProfiles.get(id).getString(Constants.IP))
+                            .put(Constants.DEVICE_PORT, discoveryProfiles.get(id).getString(Constants.DEVICE_PORT));
+
+                    // Find Device which are Discovered ,and put their details in jsonObject
+                    validDevices.values().stream()
+                            .filter(device -> device.getLong(Constants.DISCOVERY_ID).equals(id))
+                            .findFirst()
+                            .ifPresent(device -> {
+                                var credentialDetails = credentialsProfiles.get(device.getLong(Constants.CREDENTIAL_ID));
+                                details.put(Constants.USERNAME, credentialDetails.getString(Constants.USERNAME))
+                                        .put(Constants.PASSWORD, credentialDetails.getString(Constants.PASSWORD));
+                            });
+
+                    details.put(Constants.REQUEST_TYPE, Constants.POLLING);
+
+                    reply.put(Constants.CONTEXT, details);
+
+                    logger.trace("Read  Request for type {} of id {} performed, sending details {}", type, id, details);
+
+                }
+                case POLLING_RESULT ->
+                {
+
+                    if (provisionedDevices.contains(id))
+                    {
+                        reply.put(Constants.IP, discoveryProfiles.get(id).getString(Constants.IP));
+
+                        logger.trace("Device with id {} is having Ip {}", id, discoveryProfiles.get(id).getString(Constants.IP));
+
+                    }
+                    else
+                    {
+                        reply.put(Constants.STATUS, Constants.FAILED);
+
+                        logger.error("Device is not Provisioned!!");
 
                     }
                 }
-
-                details.put(Constants.REQUEST_TYPE, Constants.POLLING);
-
-                reply.put(Constants.CONTEXT, details);
-
-                logger.trace("Read  Request for type {} of id {} performed, sending details {}", type, id,details);
-            }
-            case POLLING_RESULT ->
-            {
-                if(provisionedDevices.contains(id))
+                default ->
                 {
-                    reply.put(Constants.IP,discoveryProfiles.get(id).getString(Constants.IP));
+                    logger.error("Invalid Read Request Type in Database ");
 
-                    logger.trace("Device with id {} is having Ip {}", id, discoveryProfiles.get(id).getString(Constants.IP));
+                    reply.put(Constants.ERROR, Constants.INVALID_REQUEST_TYPE);
 
                 }
-                else
-                {
-                    reply.put(Constants.STATUS, Constants.FAILED);
-
-                    logger.error("Device is not Provisioned!!");
-
-                }
-
-                return reply;
-            }
-            default ->
-            {
-                logger.error("Invalid Read Request Type in Database");
-
-                reply.put(Constants.ERROR, Constants.INVALID_REQUEST_TYPE);
-
             }
         }
+        catch (Exception exception)
+        {
+            logger.error("Exception Occurred in Read Method with id Parameter", exception);
+
+            reply.put(Constants.ERROR, exception.toString())
+
+                    .put(Constants.ERROR_CODE, Constants.BAD_REQUEST)
+
+                    .put(Constants.ERROR_MESSAGE, exception.getMessage());
+        }
+
         return reply;
 
     }
-
 
 }

@@ -1,50 +1,34 @@
 package org.nmslite.utils;
 
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.file.AsyncFile;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.nmslite.Bootstrap;
-import org.nmslite.db.ConfigDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import zmq.ZMQ;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class Utils
 {
 
     private static final Logger logger = LoggerFactory.getLogger(Utils.class);
 
-    public static ConcurrentMap<String, Object> config = new ConcurrentHashMap<>();
-
-    private static final AtomicLong counter = new AtomicLong(0);
-
-
-    // TODO : GET Method for extracting Values from Config Map
-    // TODO : Util method for Encode,Decode and getLong
-
-    public static long getId()
-    {
-
-        return counter.incrementAndGet();
-
-    }
+    private static final ConcurrentMap<String, Object> config = new ConcurrentHashMap<>();
 
     public static boolean readConfig()
     {
+
         try
         {
-            Vertx vertx = Bootstrap.getVertx();
+            var vertx = Bootstrap.getVertx();
 
             var data = vertx.fileSystem().readFileBlocking(Constants.CONFIG_PATH).toJsonObject();
 
@@ -68,6 +52,36 @@ public class Utils
         return true;
     }
 
+    public static Object get(String key)
+    {
+        return config.get(key);
+    }
+
+    public static String encode(String message)
+    {
+        return Base64.getEncoder().encodeToString(message.getBytes(ZMQ.CHARSET));
+    }
+
+    public static JsonObject decode(String message)
+    {
+        var decodedBytes = Base64.getDecoder().decode(message);
+
+        var decodedString = new String(decodedBytes);
+
+        return new JsonObject(decodedString);
+    }
+
+    public static Long getLong(String object) throws NumberFormatException
+    {
+        return Long.parseLong(object);
+    }
+
+    public static Integer getInteger(String object) throws NumberFormatException
+    {
+
+        return Integer.parseInt(object);
+    }
+
     public static JsonArray createContext(JsonObject targets, String requestType, Logger logger)
     {
 
@@ -83,7 +97,7 @@ public class Utils
 
             context.put(Constants.REQUEST_TYPE, requestType);
 
-            context.put(Constants.DEVICE_PORT, Integer.parseInt(discoveryInfo.getString(Constants.DEVICE_PORT)));
+            context.put(Constants.DEVICE_PORT, Utils.getInteger(discoveryInfo.getString(Constants.DEVICE_PORT)));
 
             context.put(Constants.IP, discoveryInfo.getString(Constants.IP));
 
@@ -117,24 +131,24 @@ public class Utils
     public static void writeToFileAsync(String ip, JsonObject result)
     {
 
-        Vertx vertx = Bootstrap.getVertx();
+        var vertx = Bootstrap.getVertx();
 
-        String fileName = Constants.FILE_PATH + ip + ".txt";
+        var fileName = Constants.FILE_PATH + ip + ".txt";
 
-        LocalDateTime now = LocalDateTime.now();
+        var now = LocalDateTime.now();
 
-        String formattedDateTime = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        var formattedDateTime = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
-        String data = "{ \"" + formattedDateTime + "\" : " + result.toString() + "}\n";
+        var data = "{ \"" + formattedDateTime + "\" : " + result.toString() + "}\n";
 
         vertx.fileSystem().open(fileName, new OpenOptions().setAppend(true), asyncResult ->
         {
             if (asyncResult.succeeded())
             {
 
-                AsyncFile file = asyncResult.result();
+                var file = asyncResult.result();
 
-                Buffer buffer = Buffer.buffer(data);
+                var buffer = Buffer.buffer(data);
 
                 file.write(buffer, writeResult ->
                 {
@@ -204,7 +218,6 @@ public class Utils
 //        return false;
 //
 //    }
-
 
 }
 
