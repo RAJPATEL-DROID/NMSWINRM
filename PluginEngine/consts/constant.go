@@ -48,6 +48,8 @@ const (
 	RESULT = "result"
 
 	HostName = "system.host.name"
+
+	ConfigPath = "../Config/pluginConfig.json"
 )
 
 var (

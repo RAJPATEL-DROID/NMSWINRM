@@ -8,7 +8,55 @@ import (
 	"strconv"
 )
 
+// Config struct to hold configuration values
+type Config struct {
+	PublisherHost string `json:"host.ip"`
+	Push          int    `json:"zmq.push.port"`
+	Pull          int    `json:"zmq.pull.port"`
+}
+
+func ReadConfig(filename string) (config Config, err error) {
+	var logger = NewLogger("utils", "readConfig")
+
+	// Handle Panic and Set Error value
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Fatal(fmt.Sprintf("Unexpected panic: %s", r))
+
+			err = fmt.Errorf("unexpected panic: %v", r)
+
+		}
+	}()
+
+	file, err := os.Open(filename)
+	if err != nil {
+		logger.Fatal(fmt.Sprint("Error opening file : ", err))
+		return
+	}
+
+	defer func(file *os.File) {
+		err = file.Close()
+		if err != nil {
+			logger.Fatal(fmt.Sprint("Error closing file : ", err))
+		}
+	}(file)
+
+	decoder := json.NewDecoder(file)
+
+	err = decoder.Decode(&config)
+	if err != nil {
+
+		logger.Fatal(fmt.Sprint("Error decoding file : ", err))
+
+		return
+	}
+
+	logger.Info("Config Read Successfully")
+	return
+}
+
 func Decode(encodedString string) ([]map[string]interface{}, error) {
+
 	var logger = NewLogger("utils", "Decode")
 
 	decodedBytes, err := base64.StdEncoding.DecodeString(encodedString)
@@ -31,6 +79,7 @@ func Decode(encodedString string) ([]map[string]interface{}, error) {
 	}
 
 	return jsonContexts, nil
+
 }
 
 func Encode(resultMap map[string]interface{}) (string, error) {
@@ -85,40 +134,6 @@ func ToString(data any) string {
 
 		return fmt.Sprintf("%v", data)
 	}
-}
-
-// Config struct to hold configuration values
-type Config struct {
-	PublisherHost string `json:"host.ip"`
-	Push          int    `json:"zmq.push.port"`
-	Pull          int    `json:"zmq.pull.port"`
-}
-
-func ReadConfig(filename string) (Config, error) {
-	var logger = NewLogger("utils", "readConfig")
-
-	var config Config
-	file, err := os.Open(filename)
-	if err != nil {
-
-		logger.Fatal(fmt.Sprint("Error opening file : ", err))
-
-		return config, err
-	}
-	defer file.Close()
-
-	decoder := json.NewDecoder(file)
-
-	err = decoder.Decode(&config)
-	if err != nil {
-
-		logger.Fatal(fmt.Sprint("Error decoding file : ", err))
-
-		return config, err
-	}
-
-	logger.Info("Config Read Successfully")
-	return config, nil
 }
 
 var MetricsMap = map[string]string{

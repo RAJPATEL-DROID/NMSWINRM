@@ -10,11 +10,10 @@ import (
 
 func main() {
 
-	// Set Up Logger
 	logger := utils.NewLogger("bootstrap", "gobootstrap")
 
 	// Read configuration from config.json
-	config, err := utils.ReadConfig("../Config/pluginConfig.json")
+	config, err := utils.ReadConfig(ConfigPath)
 
 	if err != nil {
 		logger.Error(fmt.Sprintf("Error reading config file: %s\n", err))
@@ -23,12 +22,13 @@ func main() {
 
 	defer func() {
 		if err := recover(); err != nil {
-			logger.Error(fmt.Sprintf("Panic in BootStrap file: %s\n", err))
+			logger.Error(fmt.Sprintf("Error in Starting PluginEngine : %s\n", err))
 			return
 		}
 	}()
 
 	// Create ZMQ Context and Create Socket for PUSH-PULL Communication
+	// Initialise Go Routines for Receiving and Sending the Messages via ZMQ
 	err = server.Connect(config)
 
 	if err != nil {
@@ -37,6 +37,21 @@ func main() {
 	}
 
 	logger.Info("Plugin engine initialized...")
+
+	process()
+}
+
+func process() {
+
+	logger := utils.NewLogger("bootstrap", "process")
+
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Error(fmt.Sprintf("Error in Processing Context : %s\n", err))
+
+			process()
+		}
+	}()
 
 	for {
 		data := <-Receiver
@@ -47,10 +62,6 @@ func main() {
 		logger := utils.NewLogger("processor", "processContext")
 
 		// Error in decoding the context
-		if err != nil {
-			logger.Fatal(fmt.Sprintf("Error decoding context: %s", err))
-			return
-		} // Error in decoding the context
 		if err != nil {
 			logger.Fatal(fmt.Sprintf("Error decoding context: %s", err))
 			return

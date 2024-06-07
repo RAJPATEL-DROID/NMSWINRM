@@ -154,6 +154,7 @@ const (
 		"$diskInfo = Get-WmiObject Win32_LogicalDisk\n$totalFreeSpace = ($diskInfo | Measure-Object -Property FreeSpace -Sum).Sum\n$totalSize = ($diskInfo | Measure-Object -Property Size -Sum).Sum\n$totalFreePercentage = ($totalFreeSpace / $totalSize) * 100\nWrite-Output \"system.disk.free.percent: $totalFreePercentage\";" +
 		"$diskInfo = Get-CimInstance -Class Win32_LogicalDisk | \n    Select-Object  @{Label='Used'; expression={($_.Size - $_.FreeSpace)}},@{Label='Total'; expression={($_.Size)}} | \n    Measure-Object -Property Used,Total -Sum\n\n$usedSum = $diskInfo | Where-Object { $_.Property -eq 'Used' } | Select-Object -ExpandProperty Sum\n$totalSum = $diskInfo | Where-Object { $_.Property -eq 'Total' } | Select-Object -ExpandProperty Sum\n\n$percentageUsed = ($usedSum / $totalSum) * 100\n\nWrite-Output \"system.disk.used.percent: $percentageUsed\";"
 
+	// TODO : Optimize this queries
 	systemMetrics = "Write-Output (\"system.serial.number:\" + (Get-WmiObject Win32_BIOS).SerialNumber);" +
 		"Write-Output (\"started.time.seconds:\" + (((get-date)- (gcim Win32_OperatingSystem).LastBootUpTime).totalSeconds));" +
 		"Write-Output (\"system.logical.processors:\" + (Get-WmiObject Win32_ComputerSystem).NumberOfLogicalProcessors);" +
@@ -316,7 +317,7 @@ func Collect(context map[string]interface{}) {
 	results := make(map[string]interface{})
 
 	for length > 0 {
-		
+
 		result := <-resultChannel
 
 		if result[consts.ERROR] != nil {
