@@ -137,7 +137,7 @@ public class Utils
 
         var now = LocalDateTime.now();
 
-        var formattedDateTime = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        var formattedDateTime = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"));
 
         var data = "{ \"" + formattedDateTime + "\" : " + result.toString() + "}\n";
 
